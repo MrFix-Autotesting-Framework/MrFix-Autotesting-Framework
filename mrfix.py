@@ -288,8 +288,7 @@ class MrFixUI :
             if MrFixUI.check_exists_xpath(self, xpath_element) == False:
                 print(f'Element {xpath_element} not exists')
                 sys.exit()
-            element = self.find_element(By.XPATH, xpath_element)
-            element.click()
+            self.find_element(By.XPATH, xpath_element).click()
             return True
         except WebDriverException:
             print("Element is not clickable")
@@ -298,14 +297,14 @@ class MrFixUI :
 
     def check_visible_element(self, xpath_element):
         try:
-            element = self.find_element_by_xpath(xpath_element)
+            element = self.find_element(By.XPATH, xpath_element)
             return element.is_visible()
         except NoSuchElementException:
             return False
 
     def check_displayed_element(self, xpath_element):
         try:
-            element = self.find_element_by_xpath(xpath_element)
+            element = self.find_element(By.XPATH, xpath_element)
             return element.is_displayed()
         except NoSuchElementException:
             return False
