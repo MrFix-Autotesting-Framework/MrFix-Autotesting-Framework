@@ -20,7 +20,7 @@ MrFix — модуль с набором методов-декораторов �
 Ссылка на исходный код: https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 
 Установка модуля MrFix: 
-pip install mrfix
+  pip install mrfix
 
 Методы модуля MrFix (mrfix)
 
