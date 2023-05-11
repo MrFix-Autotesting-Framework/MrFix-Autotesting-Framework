@@ -17,7 +17,7 @@ import selenium.webdriver.support.ui as ui
 
 
 
-class MrFix :
+class MrFixUI :
 
     def assertElementsIsPresentByXpatch(self, xpath_elements):
         try:
@@ -57,7 +57,7 @@ class MrFix :
         return True
 
     def click_element(self, xpath_element):
-        if MrFix.check_exists_xpath(self, xpath_element) == True:
+        if MrFixUI.check_exists_xpath(self, xpath_element) == True:
             self.find_element(By.XPATH, xpath_element).click()
         else:
             print(f'Element {xpath_element} not exists')
@@ -65,7 +65,7 @@ class MrFix :
 
 
     def click_drop_down_text(self, xpath_element, element_text):
-        if MrFix.check_exists_xpath(self, xpath_element) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_element) == False:
             print(f'Element {xpath_element} not exists')
             sys.exit()
         element = self.find_element(By.XPATH, xpath_element)
@@ -77,22 +77,22 @@ class MrFix :
                 break
 
     def send_input_text(self, xpath_input, input_text):
-        if MrFix.check_exists_xpath(self, xpath_input) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_input) == False:
             print(f'Element {xpath_input} not exists')
             sys.exit()
-        MrFix.assertElementIsPresentByXPath_Send(self, xpath_input, input_text)
+        MrFixUI.assertElementIsPresentByXPath_Send(self, xpath_input, input_text)
 
 
     def return_elements_array(self, xpath_elements):
-        if MrFix.check_exists_xpath(self, xpath_elements) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_elements) == False:
             print(f'Element {xpath_elements} not exists')
             sys.exit()
-        elements_array = MrFix.assertElementsIsPresentByXpatch(self, xpath_elements)
+        elements_array = MrFixUI.assertElementsIsPresentByXpatch(self, xpath_elements)
         return elements_array
 
 
     def return_elements_array2(self, xpath_elements):
-        if MrFix.check_exists_xpath(self, xpath_elements) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_elements) == False:
             print(f'Element {xpath_elements} not exists')
             sys.exit()
         elements_array = self.find_elements(By.XPATH, xpath_elements)
@@ -112,14 +112,14 @@ class MrFix :
 
             # Calculate new scroll height and compare with last scroll height
             new_height = self.execute_script("return document.body.scrollHeight")
-            if new_height == last_height or MrFix.check_exists_xpath(self, xpath_down_link):
+            if new_height == last_height or MrFixUI.check_exists_xpath(self, xpath_down_link):
                 break
             last_height = new_height
-        assert MrFix.assertElementIsPresentByXPath_Click(self, xpath_down_link), f'Element {xpath_down_link} not exists'
+        assert MrFixUI.assertElementIsPresentByXPath_Click(self, xpath_down_link), f'Element {xpath_down_link} not exists'
 
 
     def click_element_key_enter(self, xpath_element):
-        if MrFix.check_exists_xpath(self, xpath_element) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_element) == False:
             print(f'Element {xpath_element} not exists')
             sys.exit()
         self.find_element(By.XPATH, xpath_element).send_keys(Keys.RETURN)
@@ -135,7 +135,7 @@ class MrFix :
 
 
     def uploading_file(self, xpath_input_file, file_path):
-        if MrFix.check_exists_xpath(self, xpath_input_file) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_input_file) == False:
             print(f'Element {xpath_input_file} not exists')
             sys.exit()
         self.find_element(By.XPATH, xpath_input_file).send_keys(file_path)
@@ -153,7 +153,7 @@ class MrFix :
 
 
     def get_elements_attribute(self, xpath_element, attribute):
-        if MrFix.check_exists_xpath(self, xpath_element) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_element) == False:
             print(f'Element {xpath_element} not exists')
             sys.exit()
         element = self.find_element(By.XPATH, xpath_element)
@@ -161,7 +161,7 @@ class MrFix :
 
 
     def get_elements_text(self, xpath_element):
-        if MrFix.check_exists_xpath(self, xpath_element) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_element) == False:
             print(f'Element {xpath_element} not exists')
             sys.exit()
         element = self.find_element(By.XPATH, xpath_element)
@@ -169,7 +169,7 @@ class MrFix :
 
 
     def select_drop_down_value(self, xpath_drop_down, drop_down_value):
-        if MrFix.check_exists_xpath(self, xpath_drop_down) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_drop_down) == False:
             print(f'Element {xpath_drop_down} not exists')
             sys.exit()
         select = Select(self.find_element(By.XPATH, xpath_drop_down))
@@ -178,7 +178,7 @@ class MrFix :
 
 
     def select_drop_down_text(self, xpath_drop_down, drop_down_text):
-        if MrFix.check_exists_xpath(self, xpath_drop_down) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_drop_down) == False:
             print(f'Element {xpath_drop_down} not exists')
             sys.exit()
         select = Select(self.find_element(By.XPATH, xpath_drop_down))
@@ -187,7 +187,7 @@ class MrFix :
 
 
     def clear_input_element(self, xpath_input_element):
-        if MrFix.check_exists_xpath(self, xpath_input_element) == False:
+        if MrFixUI.check_exists_xpath(self, xpath_input_element) == False:
             print(f'Element {xpath_input_element} not exists')
             sys.exit()
         element = self.find_element(By.XPATH, xpath_input_element)
@@ -285,7 +285,7 @@ class MrFix :
 
     def check_clickable_element(self, xpath_element):
         try:
-            if MrFix.check_exists_xpath(self, xpath_element) == False:
+            if MrFixUI.check_exists_xpath(self, xpath_element) == False:
                 print(f'Element {xpath_element} not exists')
                 sys.exit()
             element = self.find_element(By.XPATH, xpath_element)
@@ -333,20 +333,20 @@ class MrFix :
 
 
     def make_element_displayed_and_click(self, xpath_element):
-        while not MrFix.check_displayed_element(self, xpath_element):
-            MrFix.pressing_down_arrow_key(self, 1)
-        MrFix.click_element(self, xpath_element)
+        while not MrFixUI.check_displayed_element(self, xpath_element):
+            MrFixUI.pressing_down_arrow_key(self, 1)
+        MrFixUI.click_element(self, xpath_element)
 
 
     def make_element_displayed_and_send(self, xpath_element, send_text):
-        while not MrFix.check_displayed_element(self, xpath_element):
-            MrFix.pressing_down_arrow_key(self, 1)
-        MrFix.send_input_text(self, xpath_element, send_text)
+        while not MrFixUI.check_displayed_element(self, xpath_element):
+            MrFixUI.pressing_down_arrow_key(self, 1)
+        MrFixUI.send_input_text(self, xpath_element, send_text)
 
 
     def find_href_on_page(self, link):
         link_availability = False
-        if MrFix.check_exists_xpath(self, "//a[@href]") == True:
+        if MrFixUI.check_exists_xpath(self, "//a[@href]") == True:
             elems = self.find_element(By.XPATH, "//a[@href]")
         for elem in elems:
             s = elem.get_attribute("href")
@@ -357,7 +357,7 @@ class MrFix :
 
     def waiting_process_complete(self, xpath_proccess, time_in_second):
         for i in range(time_in_second * 2):
-            if MrFix.check_displayed_element(self, xpath_proccess):
+            if MrFixUI.check_displayed_element(self, xpath_proccess):
                 time.sleep(0.5)
             else:
                 time.sleep(0.5)
@@ -366,7 +366,7 @@ class MrFix :
 
     def waiting_appearance_element (self, xpath_element, time_in_second):
         for i in range(time_in_second * 2):
-            if not MrFix.check_displayed_element(self, xpath_element):
+            if not MrFixUI.check_displayed_element(self, xpath_element):
                 time.sleep(0.5)
             else:
                 time.sleep(0.5)
