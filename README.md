@@ -98,13 +98,13 @@ convert_string_to_float(string_value) - преобразует строку stri
 
 find_text_on_page(driver, text) - проверяет наличие текста text на странице, выполяет клик на по тексту и возвращает True в случае успеха, а в противном случае возвращает False
 
-for_down_make_element_displayed_and_click(driver, xpath_element) - нажимает клавишу "стрелка вниз" до тех пор, пока элемент с xpath = xpath_element не станет is_displayed, затем кликает на этот элемент
+for_down_make_element_displayed_and_click(driver, xpath_element, time_in_second) - нажимает клавишу "стрелка вниз" до тех пор, пока элемент с xpath = xpath_element не станет is_displayed, затем кликает на этот элемент, причем если за time_in_second секунд элемент не станет is_displayed, то метод тогда завершает свою работу
 
-for_up_make_element_displayed_and_click(driver, xpath_element) - нажимает клавишу "стрелка вверх" до тех пор, пока элемент с xpath = xpath_element не станет is_displayed, затем кликает на этот элемент
+for_up_make_element_displayed_and_click(driver, xpath_element, time_in_second) - нажимает клавишу "стрелка вверх" до тех пор, пока элемент с xpath = xpath_element не станет is_displayed, затем кликает на этот элемент, причем если за time_in_second секунд элемент не станет is_displayed, то метод тогда завершает свою работу
 
-for_down_make_element_displayed_and_send(driver, xpath_element, send_text) - нажимает клавишу "стрелка вниз" до тех пор, пока поле для ввода с xpath = xpath_element не станет is_displayed, затем отправляет в это поле строку send_text
+for_down_make_element_displayed_and_send(driver, xpath_element, send_text, time_in_second) - нажимает клавишу "стрелка вниз" до тех пор, пока поле для ввода с xpath = xpath_element не станет is_displayed, затем отправляет в это поле строку send_text, причем если за time_in_second секунд элемент не станет is_displayed, то метод тогда завершает свою работу
 
-for_up_make_element_displayed_and_send(driver, xpath_element, send_text) - нажимает клавишу "стрелка вверх" до тех пор, пока поле для ввода с xpath = xpath_element не станет is_displayed, затем отправляет в это поле строку send_text
+for_up_make_element_displayed_and_send(driver, xpath_element, send_text, time_in_second) - нажимает клавишу "стрелка вверх" до тех пор, пока поле для ввода с xpath = xpath_element не станет is_displayed, затем отправляет в это поле строку send_text, причем если за time_in_second секунд элемент не станет is_displayed, то метод тогда завершает свою работу
 
 find_href_on_page(driver, link) - ищет во всех имеющихся на странице href значение link и возвращает True в случае успеха, иначе возвращает False
 
