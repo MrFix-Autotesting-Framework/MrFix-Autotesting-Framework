@@ -331,27 +331,43 @@ class MrFixUI :
             return False
 
 
-    def for_down_make_element_displayed_and_click(self, xpath_element):
-        while not MrFixUI.check_displayed_element(self, xpath_element):
+    def for_down_make_element_displayed_and_click(self, xpath_element, time_in_second):
+        start_time = time.time()
+        delta_time = 0
+        while not MrFixUI.check_displayed_element(self, xpath_element) and delta_time <= time_in_second:
             MrFixUI.pressing_down_arrow_key(self, 1)
+            stop_time = time.time()
+            delta_time = stop_time - start_time
         MrFixUI.click_element(self, xpath_element)
 
 
-    def for_up_make_element_displayed_and_click(self, xpath_element):
-        while not MrFixUI.check_displayed_element(self, xpath_element):
+    def for_up_make_element_displayed_and_click(self, xpath_element, time_in_second):
+        start_time = time.time()
+        delta_time = 0
+        while not MrFixUI.check_displayed_element(self, xpath_element) and delta_time <= time_in_second:
             MrFixUI.pressing_up_arrow_key(self, 1)
+            stop_time = time.time()
+            delta_time = stop_time - start_time
         MrFixUI.click_element(self, xpath_element)
 
 
-    def for_down_make_element_displayed_and_send(self, xpath_element, send_text):
-        while not MrFixUI.check_displayed_element(self, xpath_element):
+    def for_down_make_element_displayed_and_send(self, xpath_element, send_text, time_in_second):
+        start_time = time.time()
+        delta_time = 0
+        while not MrFixUI.check_displayed_element(self, xpath_element) and delta_time <= time_in_second:
             MrFixUI.pressing_down_arrow_key(self, 1)
+            stop_time = time.time()
+            delta_time = stop_time - start_time
         MrFixUI.send_input_text(self, xpath_element, send_text)
 
 
-    def for_up_make_element_displayed_and_send(self, xpath_element, send_text):
-        while not MrFixUI.check_displayed_element(self, xpath_element):
+    def for_up_make_element_displayed_and_send(self, xpath_element, send_text, time_in_second):
+        start_time = time.time()
+        delta_time = 0
+        while not MrFixUI.check_displayed_element(self, xpath_element) and delta_time <= time_in_second:
             MrFixUI.pressing_up_arrow_key(self, 1)
+            stop_time = time.time()
+            delta_time = stop_time - start_time
         MrFixUI.send_input_text(self, xpath_element, send_text)
 
 
