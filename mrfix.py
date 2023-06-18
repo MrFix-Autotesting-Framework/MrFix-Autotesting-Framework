@@ -1,415 +1,810 @@
-import sys
 import time
-import requests
-from loguru import logger
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import NoSuchWindowException
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.alert import Alert
+from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import datetime
 import pyperclip
-from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import selenium.webdriver.support.ui as ui
 
 
 
-class MrFixUI :
+class MrFixUI:
 
-    def assertElementsIsPresentByXpatch(self, xpath_elements):
+    @staticmethod
+    def check_exists_xpath(driver, check_xpath):
+        # - checks for the presence of an element with xpath=check_xpath on the page at the moment and returns True or False
+
+        original_timeout = driver.get_timeout()
         try:
-            elements = self.find_elements(By.XPATH, xpath_elements)
-            return [True, len(elements)]
-        except NoSuchElementException:
-            return [False, 0]
+            driver.implicitly_wait(1)
+            # Find the element using XPath
+            element = driver.find_element(By.XPATH, check_xpath)
 
-    def assertElementIsPresentByXPath_Click(self, xpath, msg=None):
-        try:
-            element = self.find_element(By.XPATH, xpath).click()
+            # If the element is found, return True
             return True
         except NoSuchElementException:
+            # If the element is not found, return False
             return False
+        finally:
+            driver.implicitly_wait(original_timeout)
 
-    def assertElementIsPresentByXPath_Send(self, xpath_input, send_message):
+    @staticmethod
+    def click_element_by_xpath(driver, element_xpath):
+        # - performs a click on an element with xpath=element_xpath and returns True or error text
+
         try:
-            element = self.find_element(By.XPATH, xpath_input)
-            element.clear()
-            length = len(element.get_attribute('value'))
-            element.send_keys(length * Keys.BACKSPACE)
-            time.sleep(0.5)
-            element.send_keys(send_message)
+            # Find the element by XPath
+            element = driver.find_element(By.XPATH, element_xpath)
+
+            # Click the element
+            element.click()
+            # element.send_keys("\n")
+
+            return True  # Click successful
+
+        except NoSuchElementException as e:
+            error_message = f"Element not found: {str(e)}"
+            return error_message
+
+        except Exception as e:
+            error_message = f"An error occurred: {str(e)}"
+            return error_message
+
+    @staticmethod
+    def select_from_dropdown_text(driver, dropdown_xpath, dropdown_text):
+        # - selects a line with text = dropdown_text from the drop-down list with xpath = dropdown_xpath and returns True or error text
+        try:
+            # Find the dropdown element by XPath
+            dropdown = Select(driver.find_element(By.XPATH, dropdown_xpath))
+
+            # Select the option by its text
+            dropdown.select_by_visible_text(dropdown_text)
+
+            return True  # Option selected successfully
+
+        except NoSuchElementException as e:
+            error_message = f"Element not found: {str(e)}"
+            return error_message
+
+        except Exception as e:
+            error_message = f"An error occurred: {str(e)}"
+            return error_message
+
+    @staticmethod
+    def send_text_to_input(driver, input_xpath, send_text):
+        # - sends to the input element with xpath = input_xpath text = send_text and returns True or error text
+
+        try:
+            # Find the input element using XPath
+            input_element = driver.find_element(By.XPATH, input_xpath)
+
+            # Clear the input field
+            input_element.clear()
+
+            # Send text to the input element
+            input_element.send_keys(send_text)
+            input_element.send_keys(Keys.ENTER)
+
+            # Return True to indicate successful text entry
             return True
-        except NoSuchElementException:
-            return (False)
 
-    def check_exists_xpath(self, xpath_element):
+        except NoSuchElementException:
+            # If the input element is not found, return the error message
+            return f"Input element not found for XPath: {input_xpath}"
+
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
+
+    @staticmethod
+    def return_list_elements_by_xpath(driver, elements_xpath):
+        # - returns a list of elements with xpath = elements_xpath or returns the error text
+
         try:
-            self.set_page_load_timeout(1)
-            self.implicitly_wait(1)
-            self.find_element(By.XPATH, xpath_element)
-            self.implicitly_wait(10)
-            self.set_page_load_timeout(10)
+            # Find the elements using XPath
+            elements = driver.find_elements(By.XPATH, elements_xpath)
+
+            # Return the list of elements
+            return elements
+
         except NoSuchElementException:
-            return False
-        return True
+            # If no elements are found, return the error message
+            return f"No elements found for XPath: {elements_xpath}"
 
-    def click_element(self, xpath_element):
-        if MrFixUI.check_exists_xpath(self, xpath_element) == True:
-            self.find_element(By.XPATH, xpath_element).click()
-        else:
-            print(f'Element {xpath_element} not exists')
-            sys.exit()
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
 
+    @staticmethod
+    def press_enter_on_element(driver, element_xpath):
+        # - click Enter on element with xpath = elements_xpath and returns True or error text
 
-    def click_drop_down_text(self, xpath_element, element_text):
-        if MrFixUI.check_exists_xpath(self, xpath_element) == False:
-            print(f'Element {xpath_element} not exists')
-            sys.exit()
-        element = self.find_element(By.XPATH, xpath_element)
-        element.click()
-        all_options = element.find_elements_by_tag_name("option")
-        for option in all_options:
-            if option.get_attribute("text") == element_text:
-                option.click()
-                break
+        try:
+            # Find the element using XPath
+            element = driver.find_element(By.XPATH, element_xpath)
 
-    def send_input_text(self, xpath_input, input_text):
-        if MrFixUI.check_exists_xpath(self, xpath_input) == False:
-            print(f'Element {xpath_input} not exists')
-            sys.exit()
-        MrFixUI.assertElementIsPresentByXPath_Send(self, xpath_input, input_text)
+            # Simulate pressing the Enter key on the element
+            element.send_keys(Keys.ENTER)
 
+            # Return True to indicate successful key press
+            return True
 
-    def return_elements_array(self, xpath_elements):
-        if MrFixUI.check_exists_xpath(self, xpath_elements) == False:
-            print(f'Element {xpath_elements} not exists')
-            sys.exit()
-        elements_array = MrFixUI.assertElementsIsPresentByXpatch(self, xpath_elements)
-        return elements_array
+        except NoSuchElementException:
+            # If the element is not found, return the error message
+            return f"Element not found for XPath: {element_xpath}"
 
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
 
-    def return_elements_array2(self, xpath_elements):
-        if MrFixUI.check_exists_xpath(self, xpath_elements) == False:
-            print(f'Element {xpath_elements} not exists')
-            sys.exit()
-        elements_array = self.find_elements(By.XPATH, xpath_elements)
-        return elements_array
+    @staticmethod
+    def press_space_on_element(driver, element_xpath):
+        # and returns True or error text
 
+        try:
+            # Find the element using XPath
+            element = driver.find_element(By.XPATH, element_xpath)
 
-    def scroll_down_click_element(self, xpath_down_link):
-        scroll_pause_time = 0.5
-        # Get scroll height
-        last_height = self.execute_script("return document.body.scrollHeight")
-        while True:
-            # Scroll down to bottom
-            self.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            # Simulate pressing the Enter key on the element
+            element.send_keys(Keys.SPACE)
 
-            # Wait to load page
-            time.sleep(scroll_pause_time)
+            # Return True to indicate successful key press
+            return True
 
-            # Calculate new scroll height and compare with last scroll height
-            new_height = self.execute_script("return document.body.scrollHeight")
-            if new_height == last_height or MrFixUI.check_exists_xpath(self, xpath_down_link):
-                break
-            last_height = new_height
-        assert MrFixUI.assertElementIsPresentByXPath_Click(self, xpath_down_link), f'Element {xpath_down_link} not exists'
+        except NoSuchElementException:
+            # If the element is not found, return the error message
+            return f"Element not found for XPath: {element_xpath}"
 
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
 
-    def click_element_key_enter(self, xpath_element):
-        if MrFixUI.check_exists_xpath(self, xpath_element) == False:
-            print(f'Element {xpath_element} not exists')
-            sys.exit()
-        self.find_element(By.XPATH, xpath_element).send_keys(Keys.RETURN)
+    @staticmethod
+    def upload_file(driver, input_xpath, file_path):
+        # and returns True or error text
 
+        try:
+            # Find the file input element using XPath
+            file_input = driver.find_element(By.XPATH, input_xpath)
 
-    def autorization_user(self, url, login, password):
-        session = requests.Session()
-        session.post(url, {
-            'username': login,
-            'password': password,
-            'remember': 1,
-        })
+            # Clear the file input field (optional)
+            file_input.clear()
 
+            # Send the file path to the file input element
+            file_input.send_keys(file_path)
 
-    def uploading_file(self, xpath_input_file, file_path):
-        if MrFixUI.check_exists_xpath(self, xpath_input_file) == False:
-            print(f'Element {xpath_input_file} not exists')
-            sys.exit()
-        self.find_element(By.XPATH, xpath_input_file).send_keys(file_path)
+            # Return True to indicate successful file upload
+            return True
 
+        except NoSuchElementException:
+            # If the file input element is not found, return the error message
+            return f"File input element not found for XPath: {input_xpath}"
 
-    def switch_to_current_window(self):
-        self.switch_to.active_element
-        handles = self.window_handles
-        for handle in handles:
-            if self.current_window_handle != handle:
-                # Close first window
-                self.close()
-                # set second window active (handle)
-                self.switch_to.window(handle)
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
 
+    @staticmethod
+    def switch_to_current_window(driver):
+        # and returns True or error text
 
-    def get_elements_attribute(self, xpath_element, attribute):
-        if MrFixUI.check_exists_xpath(self, xpath_element) == False:
-            print(f'Element {xpath_element} not exists')
-            sys.exit()
-        element = self.find_element(By.XPATH, xpath_element)
-        return element.get_attribute(attribute)
+        try:
+            # Get the window handle of the current window
+            current_window = driver.current_window_handle
 
+            # Close all other windows except the current window
+            for window_handle in driver.window_handles:
+                if window_handle != current_window:
+                    driver.switch_to.window(window_handle)
+                    driver.close()
 
-    def get_elements_text(self, xpath_element):
-        if MrFixUI.check_exists_xpath(self, xpath_element) == False:
-            print(f'Element {xpath_element} not exists')
-            sys.exit()
-        element = self.find_element(By.XPATH, xpath_element)
-        return element.text
+            # Switch back to the current window
+            driver.switch_to.window(current_window)
 
+            # Return True to indicate successful window switch
+            return True
 
-    def select_drop_down_value(self, xpath_drop_down, drop_down_value):
-        if MrFixUI.check_exists_xpath(self, xpath_drop_down) == False:
-            print(f'Element {xpath_drop_down} not exists')
-            sys.exit()
-        select = Select(self.find_element(By.XPATH, xpath_drop_down))
-        # select by value
-        select.select_by_value(drop_down_value)
+        except NoSuchWindowException:
+            # If the window handle is not found, return the error message
+            return "Window handle not found"
 
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
 
-    def select_drop_down_text(self, xpath_drop_down, drop_down_text):
-        if MrFixUI.check_exists_xpath(self, xpath_drop_down) == False:
-            print(f'Element {xpath_drop_down} not exists')
-            sys.exit()
-        select = Select(self.find_element(By.XPATH, xpath_drop_down))
-        # select by visible text
-        select.select_by_visible_text(drop_down_text)
+    @staticmethod
+    def get_element_attribute(driver, element_xpath, element_attribute):
+        # and returns the attribute value or error text
 
+        try:
+            # Find the element using XPath
+            element = driver.find_element(By.XPATH, element_xpath)
 
-    def clear_input_element(self, xpath_input_element):
-        if MrFixUI.check_exists_xpath(self, xpath_input_element) == False:
-            print(f'Element {xpath_input_element} not exists')
-            sys.exit()
-        element = self.find_element(By.XPATH, xpath_input_element)
-        element.send_keys(Keys.CONTROL, "a")
-        element.send_keys(Keys.DELETE)
-        element.clear()
+            # Get the attribute value of the element
+            attribute_value = element.get_attribute(element_attribute)
 
+            # Return the attribute value
+            return attribute_value
 
-    def pressing_down_arrow_key(self, n):
-        action = ActionChains(self)
+        except NoSuchElementException:
+            # If the element is not found, return the error message
+            return f"Element not found for XPath: {element_xpath}"
+
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
+
+    @staticmethod
+    def get_element_text(driver, element_xpath):
+
+        try:
+            # Find the element using XPath
+            element = driver.find_element(By.XPATH, element_xpath)
+
+            # Get the text of the element
+            element_text = element.text
+
+            # Return the element text
+            return element_text
+
+        except NoSuchElementException:
+            # If the element is not found, return the error message
+            return f"Element not found for XPath: {element_xpath}"
+
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
+
+    @staticmethod
+    def select_dropdown_value(driver, dropdown_xpath, dropdown_value):
+
+        try:
+            # Find the drop-down list element using XPath
+            dropdown = Select(driver.find_element(By.XPATH, dropdown_xpath))
+
+            # Select the value from the drop-down list
+            dropdown.select_by_value(dropdown_value)
+
+            # Return True to indicate successful selection
+            return True
+
+        except NoSuchElementException:
+            # If the element is not found, return the error message
+            return f"Element not found for XPath: {dropdown_xpath}"
+
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
+
+    @staticmethod
+    def clear_input_element(driver, element_xpath):
+
+        try:
+            # Find the input element using XPath
+            input_element = driver.find_element(By.XPATH, element_xpath)
+
+            # Clear the input element
+            input_element.clear()
+
+            # Return True to indicate successful clearing
+            return True
+
+        except NoSuchElementException:
+            # If the element is not found, return the error message
+            return f"Element not found for XPath: {element_xpath}"
+
+        except Exception as e:
+            # If any other error occurs, return the error message
+            return str(e)
+
+    @staticmethod
+    def press_down_arrow_key(driver, n):
+        action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.ARROW_DOWN)
             time.sleep(.1)
         action.perform()
 
-
-    def pressing_up_arrow_key(self, n):
-        action = ActionChains(self)
+    @staticmethod
+    def press_up_arrow_key(driver, n):
+        action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.ARROW_UP)
             time.sleep(.1)
         action.perform()
 
-
-    def pressing_left_arrow_key(self, n):
-        action = ActionChains(self)
+    @staticmethod
+    def press_left_arrow_key(driver, n):
+        action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.ARROW_LEFT)
             time.sleep(.1)
         action.perform()
 
-
-    def pressing_right_arrow_key(self, n):
-        action = ActionChains(self)
+    @staticmethod
+    def press_right_arrow_key(driver, n):
+        action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.ARROW_RIGHT)
             time.sleep(.1)
         action.perform()
 
-
-    def pressing_enter_key(self, n):
-        action = ActionChains(self)
+    @staticmethod
+    def press_enter_key(driver, n):
+        action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.RETURN)
             time.sleep(.1)
         action.perform()
 
-
-    def pressing_tab_key(self, n):
-        action = ActionChains(self)
+    @staticmethod
+    def press_tab_key(driver, n):
+        action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.TAB)
             time.sleep(.1)
         action.perform()
 
-
-    def pressing_backspace_key(self, n):
-        action = ActionChains(self)
+    @staticmethod
+    def press_backspace_key(driver, n):
+        action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.BACKSPACE)
             time.sleep(.1)
         action.perform()
 
-
-    def pressing_delete_key(self, n):
-        action = ActionChains(self)
+    @staticmethod
+    def press_delete_key(driver, n):
+        action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.DELETE)
             time.sleep(.1)
         action.perform()
 
-
-    def pressing_char_key(self, char, n):
-        action = ActionChains(self)
+    @staticmethod
+    def press_char_key(driver, char_key, n):
+        action = ActionChains(driver)
         for _ in range(n):
-            action.send_keys(char)
+            action.send_keys(char_key)
             time.sleep(.1)
         action.perform()
 
+    @staticmethod
+    def press_space_key(driver, n):
+        action = ActionChains(driver)
+        for _ in range(n):
+            action.send_keys(Keys.SPACE)
+            time.sleep(.1)
+        action.perform()
 
-    def check_url(url):
+    @staticmethod
+    def check_url_exists(driver, check_url):
         try:
-            response = requests.get(url)
-        except ValueError:
-            return False
-        return True
+            # Set a timeout to wait for the page to load
+            original_timeout = driver.get_timeout()
+            driver.set_page_load_timeout(original_timeout)
 
+            # Open the URL
+            driver.get(check_url)
 
-    def open_url_in_new_tab(self, url):
-        # open in new tab
-        self.execute_script("window.open('%s', '_blank')" % url)
-        # Switch to new tab
-        self.switch_to.window(self.window_handles[-1])
-
-
-    def check_clickable_element(self, xpath_element):
-        try:
-            if MrFixUI.check_exists_xpath(self, xpath_element) == False:
-                print(f'Element {xpath_element} not exists')
-                sys.exit()
-            self.find_element(By.XPATH, xpath_element).click()
+            # If no exception is raised, the URL exists
             return True
+
         except WebDriverException:
-            print("Element is not clickable")
+            # URL does not exist or failed to load
             return False
 
-
-    def check_visible_element(self, xpath_element):
+    @staticmethod
+    def open_url_in_new_tab(driver, open_url):
         try:
-            element = self.find_element(By.XPATH, xpath_element)
-            return element.is_visible()
-        except NoSuchElementException:
-            return False
+            # Open a new tab
+            driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + 't')
 
-    def check_displayed_element(self, xpath_element):
+            # Switch to the new tab
+            driver.switch_to.window(driver.window_handles[-1])
+
+            # Open the URL in the new tab
+            driver.get(open_url)
+
+            # Return True if the URL was opened successfully
+            return True
+
+        except WebDriverException as e:
+            # Handle any exceptions that occur and return the error message
+            return str(e)
+
+    @staticmethod
+    def check_element_is_displayed(driver, element_xpath):
+
         try:
-            element = self.find_element(By.XPATH, xpath_element)
-            return element.is_displayed()
-        except NoSuchElementException:
-            return False
+            # Find the element on the page using XPath
+            element = driver.find_element(By.XPATH, element_xpath)
 
-    def get_clipboard_text(self):
+            # Check if the element is displayed
+            if element.is_displayed():
+                return True
+            else:
+                return False
+
+        except NoSuchElementException as e:
+            # Element not found on the page
+            return str(e)
+
+        except Exception as e:
+            # Other exceptions
+            return str(e)
+
+    @staticmethod
+    def get_clipboard_text():
         return str(pyperclip.paste())
 
-
-    def convert_string_to_float(string_value):
-        val = string_value.replace(',', '.')
-        if val != '':
-            val = val.replace(' ', '', 100)
-            val = float(val)
-            return val
-        else:
-            return 0
-
-
-    def find_text_on_page(self, text):
+    @staticmethod
+    def convert_string_to_float(string_for_convert):
         try:
-            self.find_element_by_partial_link_text(text).click()
+            float_value = string_for_convert.replace(',', '.')
+            if float_value != '':
+                float_value = float_value.replace(' ', '', 100)
+                float_value = float(float_value)
+                return float_value
+        except ValueError as e:
+            return str(e)
+
+    @staticmethod
+    def check_text_is_present_on_page(driver, heck_text):
+        try:
+            # Check if the text is present in the page source
+            page_source = driver.page_source
+            if heck_text in page_source:
+                return True
+            else:
+                return False
+
+        except Exception as e:
+            # Handle any exceptions that occur
+            return f"An error occurred: {e}"
+
+    @staticmethod
+    def make_displayed_with_arrow_down_and_click(driver, element_xpath, waiting_time):
+        try:
+            # Wait for the element to be displayed by pressing the "arrow down" key
+            actions = ActionChains(driver)
+            timeout = waiting_time  # Maximum waiting time in seconds
+            start_time = datetime.datetime.now()
+            delta = 0
+            while delta <= timeout:
+                actions.send_keys(Keys.ARROW_DOWN).perform()
+                time.sleep(.1)
+                try:
+                    element = driver.find_element(By.XPATH, element_xpath)
+                    if element.is_displayed():
+                        # Click on the element
+                        element.click()
+                        break
+                    stop_time = datetime.datetime.now()
+                    delta = stop_time - start_time
+                except:
+                    pass
+            # Return True if the element is displayed and clicked successfully
             return True
-        except NoSuchElementException:
+
+        except TimeoutException:
+            return "Element not displayed within the timeout"
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def make_displayed_with_arrow_up_and_click(driver, element_xpath, waiting_time):
+        try:
+            # Wait for the element to be displayed by pressing the "arrow down" key
+            actions = ActionChains(driver)
+            timeout = waiting_time  # Maximum waiting time in seconds
+            start_time = datetime.datetime.now()
+            delta = 0
+            while delta <= timeout:
+                actions.send_keys(Keys.ARROW_UP).perform()
+                time.sleep(.1)
+                try:
+                    element = driver.find_element(By.XPATH, element_xpath)
+                    if element.is_displayed():
+                        # Click on the element
+                        element.click()
+                        break
+                    stop_time = datetime.datetime.now()
+                    delta = stop_time - start_time
+                except:
+                    pass
+            # Return True if the element is displayed and clicked successfully
+            return True
+
+        except TimeoutException:
+            return "Element not displayed within the timeout"
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def make_displayed_with_arrow_down_and_enter_click(driver, element_xpath, waiting_time):
+        try:
+            # Wait for the element to be displayed by pressing the "arrow down" key
+            actions = ActionChains(driver)
+            timeout = waiting_time  # Maximum waiting time in seconds
+            start_time = datetime.datetime.now()
+            delta = 0
+            while delta <= timeout:
+                actions.send_keys(Keys.ARROW_DOWN).perform()
+                time.sleep(.1)
+                try:
+                    element = driver.find_element(By.XPATH, element_xpath)
+                    if element.is_displayed():
+                        # Click on the element "Enter"
+                        element.send_keys(Keys.ENTER)
+                        break
+                    stop_time = datetime.datetime.now()
+                    delta = stop_time - start_time
+                except:
+                    pass
+            # Return True if the element is displayed and clicked successfully
+            return True
+
+        except TimeoutException:
+            return "Element not displayed within the timeout"
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def make_displayed_with_arrow_up_and_enter_click(driver, element_xpath, waiting_time):
+        try:
+            # Wait for the element to be displayed by pressing the "arrow down" key
+            actions = ActionChains(driver)
+            timeout = waiting_time  # Maximum waiting time in seconds
+            start_time = datetime.datetime.now()
+            delta = 0
+            while delta <= timeout:
+                actions.send_keys(Keys.ARROW_UP).perform()
+                time.sleep(.1)
+                try:
+                    element = driver.find_element(By.XPATH, element_xpath)
+                    if element.is_displayed():
+                        # Click on the element "Enter"
+                        element.send_keys(Keys.ENTER)
+                        break
+                    stop_time = datetime.datetime.now()
+                    delta = stop_time - start_time
+                except:
+                    pass
+            # Return True if the element is displayed and clicked successfully
+            return True
+
+        except TimeoutException:
+            return "Element not displayed within the timeout"
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def make_displayed_with_arrow_down_and_space_click(driver, element_xpath, waiting_time):
+        try:
+            # Wait for the element to be displayed by pressing the "arrow down" key
+            actions = ActionChains(driver)
+            timeout = waiting_time  # Maximum waiting time in seconds
+            start_time = datetime.datetime.now()
+            delta = 0
+            while delta <= timeout:
+                actions.send_keys(Keys.ARROW_DOWN).perform()
+                time.sleep(.1)
+                try:
+                    element = driver.find_element(By.XPATH, element_xpath)
+                    if element.is_displayed():
+                        # Click on the element "Space"
+                        element.send_keys(Keys.SPACE)
+                        break
+                    stop_time = datetime.datetime.now()
+                    delta = stop_time - start_time
+                except:
+                    pass
+            # Return True if the element is displayed and clicked successfully
+            return True
+
+        except TimeoutException:
+            return "Element not displayed within the timeout"
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def make_displayed_with_arrow_up_and_space_click(driver, element_xpath, waiting_time):
+        try:
+            # Wait for the element to be displayed by pressing the "arrow down" key
+            actions = ActionChains(driver)
+            timeout = waiting_time  # Maximum waiting time in seconds
+            start_time = datetime.datetime.now()
+            delta = 0
+            while delta <= timeout:
+                actions.send_keys(Keys.ARROW_UP).perform()
+                time.sleep(.1)
+                try:
+                    element = driver.find_element(By.XPATH, element_xpath)
+                    if element.is_displayed():
+                        # Click on the element "Space"
+                        element.send_keys(Keys.SPACE)
+                        break
+                    stop_time = datetime.datetime.now()
+                    delta = stop_time - start_time
+                except:
+                    pass
+            # Return True if the element is displayed and clicked successfully
+            return True
+
+        except TimeoutException:
+            return "Element not displayed within the timeout"
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def make_displayed_with_arrow_down_and_send(driver, element_xpath, send_text, waiting_time):
+        try:
+            # Wait for the element to be displayed by pressing the "arrow down" key
+            actions = ActionChains(driver)
+            timeout = waiting_time  # Maximum waiting time in seconds
+            start_time = datetime.datetime.now()
+            delta = 0
+            while delta <= timeout:
+                actions.send_keys(Keys.ARROW_DOWN).perform()
+                time.sleep(.1)
+                try:
+                    element = driver.find_element(By.XPATH, element_xpath)
+                    if element.is_displayed():
+                        # Send on the element send_text
+                        element.send_keys(send_text)
+                        break
+                    stop_time = datetime.datetime.now()
+                    delta = stop_time - start_time
+                except:
+                    pass
+            # Return True if the element is displayed and send successfully
+            return True
+
+        except TimeoutException:
+            return "Element not displayed within the timeout"
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def make_displayed_with_arrow_up_and_send(driver, element_xpath, send_text, waiting_time):
+        try:
+            # Wait for the element to be displayed by pressing the "arrow down" key
+            actions = ActionChains(driver)
+            timeout = waiting_time  # Maximum waiting time in seconds
+            start_time = datetime.datetime.now()
+            delta = 0
+            while delta <= timeout:
+                actions.send_keys(Keys.ARROW_UP).perform()
+                time.sleep(.1)
+                try:
+                    element = driver.find_element(By.XPATH, element_xpath)
+                    if element.is_displayed():
+                        # Send on the element send_text
+                        element.send_keys(send_text)
+                        break
+                    stop_time = datetime.datetime.now()
+                    delta = stop_time - start_time
+                except:
+                    pass
+            # Return True if the element is displayed and send successfully
+            return True
+
+        except TimeoutException:
+            return "Element not displayed within the timeout"
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def find_href_on_page(driver, find_href):
+        try:
+            # Find all anchor elements on the page
+            anchor_elements = driver.find_elements_by_tag_name("a")
+
+            # Check if the href is present in any anchor element
+            for anchor in anchor_elements:
+                try:
+                    if anchor.get_attribute("href") == find_href:
+                        return True
+                except NoSuchElementException:
+                    pass
+
+            # Return False if the href is not found
             return False
 
+        except Exception as e:
+            return str(e)
 
-    def for_down_make_element_displayed_and_click(self, xpath_element, time_in_second):
-        start_time = time.time()
-        delta_time = 0
-        while not MrFixUI.check_displayed_element(self, xpath_element) and delta_time <= time_in_second:
-            MrFixUI.pressing_down_arrow_key(self, 1)
-            stop_time = time.time()
-            delta_time = stop_time - start_time
-        MrFixUI.click_element(self, xpath_element)
+    @staticmethod
+    def wait_for_element_to_disappear(driver, element_xpath, waiting_time):
+        try:
+            # Wait for the element to disappear
+            wait = WebDriverWait(driver, waiting_time)  # Maximum wait time in seconds
+            wait.until(EC.invisibility_of_element_located((By.XPATH, element_xpath)))
 
-
-    def for_up_make_element_displayed_and_click(self, xpath_element, time_in_second):
-        start_time = time.time()
-        delta_time = 0
-        while not MrFixUI.check_displayed_element(self, xpath_element) and delta_time <= time_in_second:
-            MrFixUI.pressing_up_arrow_key(self, 1)
-            stop_time = time.time()
-            delta_time = stop_time - start_time
-        MrFixUI.click_element(self, xpath_element)
-
-
-    def for_down_make_element_displayed_and_send(self, xpath_element, send_text, time_in_second):
-        start_time = time.time()
-        delta_time = 0
-        while not MrFixUI.check_displayed_element(self, xpath_element) and delta_time <= time_in_second:
-            MrFixUI.pressing_down_arrow_key(self, 1)
-            stop_time = time.time()
-            delta_time = stop_time - start_time
-        MrFixUI.send_input_text(self, xpath_element, send_text)
-
-
-    def for_up_make_element_displayed_and_send(self, xpath_element, send_text, time_in_second):
-        start_time = time.time()
-        delta_time = 0
-        while not MrFixUI.check_displayed_element(self, xpath_element) and delta_time <= time_in_second:
-            MrFixUI.pressing_up_arrow_key(self, 1)
-            stop_time = time.time()
-            delta_time = stop_time - start_time
-        MrFixUI.send_input_text(self, xpath_element, send_text)
-
-
-    def find_href_on_page(self, link):
-        link_availability = False
-        if MrFixUI.check_exists_xpath(self, "//a[@href]") == True:
-            elems = self.find_element(By.XPATH, "//a[@href]")
-        for elem in elems:
-            s = elem.get_attribute("href")
-            if link in s:
-                link_availability = True
-        return link_availability
-
-
-    def waiting_process_complete(self, xpath_proccess, time_in_second):
-        for i in range(time_in_second * 2):
-            if MrFixUI.check_displayed_element(self, xpath_proccess):
-                time.sleep(0.5)
-            else:
-                time.sleep(0.5)
-                break
-
-
-    def waiting_appearance_element (self, xpath_element, time_in_second):
-        for i in range(time_in_second * 2):
-            if not MrFixUI.check_displayed_element(self, xpath_element):
-                time.sleep(0.5)
-            else:
-                time.sleep(0.5)
-                break
-
-
-    def check_class_in_element(self, xpath_element, text_in_class):
-        element = self.find_element(By.XPATH, xpath_element)
-        if text_in_class in str(element.get_attribute("class")):
+            # Return True once the element has disappeared
             return True
-        else:
-            return False
 
+        except Exception as e:
+            return str(e)
 
+    @staticmethod
+    def wait_for_element_to_appear(driver, element_xpath, waiting_time):
+        try:
+            # Wait for the element to appear
+            wait = WebDriverWait(driver, waiting_time)  # Maximum wait time in seconds
+            wait.until(EC.presence_of_element_located((By.XPATH, element_xpath)))
 
+            # Return True once the element has appeared
+            return True
 
+        except Exception as e:
+            return str(e)
 
+    @staticmethod
+    def check_text_in_class(driver, element_xpath, class_text, waiting_time):
+        try:
+            # Wait for the element to be available
+            wait = WebDriverWait(driver, waiting_time)  # Maximum wait time in seconds
+            element = wait.until(EC.presence_of_element_located((By.XPATH, element_xpath)))
 
+            # Check if the element's class attribute contains the specified text
+            if class_text in element.get_attribute("class"):
+                return True
+            else:
+                return False
 
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def double_click_element(driver, element_xpath):
+        try:
+            # Find the element by XPath
+            element = driver.find_element_by_xpath(element_xpath)
+
+            # Perform a double click on the element
+            actions = ActionChains(driver)
+            actions.double_click(element).perform()
+
+            # Return True once the double click is performed
+            return True
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def click_ok_in_alert(driver, waiting_time):
+        try:
+            # Wait for the alert to appear
+            wait = WebDriverWait(driver, waiting_time)  # Adjust the timeout value as needed
+            alert = wait.until(EC.alert_is_present())
+
+            # Switch to the alert and accept it (click "OK")
+            Alert(driver).accept()
+
+            return True  # Clicked the "OK" button successfully
+
+        except NoAlertPresentException:
+            return "No alert window present"
+
+        except Exception as e:
+            error_message = f"An error occurred: {str(e)}"
+            return error_message
+# ********************************************************************************************************
