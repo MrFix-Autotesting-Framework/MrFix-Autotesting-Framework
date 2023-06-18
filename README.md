@@ -1,14 +1,24 @@
 Module MrFix
+
 General information 
+
 The MrFix module is designed to create UI autotests written in Python using the Selenium library. Description of the methods of the MrFix module
 MrFix is a module with a set of decorators methods for writing UI-autotests in Python + Selenium. It contains all the basic methods needed to write UI-autotests. It is an open source product. It is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects). Supports the principle of "all in one and in one place". Allows a beginner (and not a beginner either) autotester not to search for a solution through various manuals and websites, but to immediately find it and use proven working methods in the MrFix module.
+
 Also the advantage of the module is:
+
     • reducing the amount of code when using methods of  module;
+    
     • a great concentration of the autotester on the correct implementation of the autotest logic, and not on the technical part of autotest;
+    
     • the uniformity of the approach of all methods to the form of organization of input data, which simplifies the memorization and application of methods of module
+    
 Link of source code:
+
 https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
+
 Description of methods
+
 Method Description: check_exists_xpath(driver, check_xpath)
 This method is a static method used to check for the presence of an element with a specified XPath expression on a web page. It takes two parameters: driver and check_xpath. The driver parameter represents the WebDriver instance being used for automation, while the check_xpath parameter is the XPath expression used to locate the desired element on the page.
 The method temporarily sets a shorter implicit wait timeout to 1 second using driver.implicitly_wait(1) in order to expedite the element search. It then attempts to find the element using the provided XPath expression.
