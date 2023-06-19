@@ -17,6 +17,14 @@ Link of source code:
 
 https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 
+Installation of the Mr Fix module is carried out using pip:
+
+pip install mrfix
+
+Example of connecting an installed module:
+
+from mr fix.mrfix imports MrFixUI as Mr Fix
+
 Description of methods
 
 Method Description: check_exists_xpath(driver, check_xpath)
