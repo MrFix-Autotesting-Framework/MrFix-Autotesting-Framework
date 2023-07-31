@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import sys
 import os
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup 
 
 
 
