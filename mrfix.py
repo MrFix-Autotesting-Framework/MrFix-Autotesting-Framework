@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import sys
 import os
 import requests
-from bs4 import BeautifulSoup 
+from bs4 import BeautifulSoup
 
 
 
@@ -40,16 +40,12 @@ class MrFixUI:
         return True
 
 
-
-
-
     @staticmethod
-    def click_element_by_xpath(driver, element_xpath):
-    # - performs a click on an element with xpath=element_xpath and returns True of success or text of error
+    def click_element_by_xpath(driver, element_xpath, timeout=10):
+    # - performs a click on an element with xpath=element_xpath and returns True of success or False
         try:
-            original_timeout = driver.get_timeout()
-            # Find the element by XPath
-            element = WebDriverWait(driver, original_timeout).until(
+            # Wait for the element to be clickable before attempting the click
+            element = WebDriverWait(driver, timeout).until(
                 EC.element_to_be_clickable((By.XPATH, element_xpath))
             )
 
@@ -58,13 +54,9 @@ class MrFixUI:
 
             return True  # Click successful
 
-        except NoSuchElementException as e:
-            error_message = f"Element not found: {str(e)}"
-            return error_message
-
-        except Exception as e:
-            error_message = f"An error occurred: {str(e)}"
-            return error_message
+        except Exception:
+            # If the element is not found or any other exception occurs, return False
+            return False
 
 
 
@@ -978,6 +970,7 @@ class MrFixUI:
 
     @staticmethod
     def get_path_separator():
+    # - returns separator of system
         return os.sep
 
 
