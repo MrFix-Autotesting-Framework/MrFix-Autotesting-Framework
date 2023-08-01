@@ -28,8 +28,8 @@ class MrFixUI:
     check_exists_xpath(driver, check_xpath):
     # - checks the existence of an element with xpath = check_xpath and returns True or False
 
-    click_element_by_xpath(driver, element_xpath):
-    # - performs a click on an element with xpath=element_xpath and returns True of success or text of error
+    click_element_by_xpath(driver, element_xpath, timeout=10):
+    # - performs a click on an element with xpath=element_xpath and returns True of success or False
 
     select_from_dropdown_text(driver, dropdown_xpath, dropdown_text):
     # - selects a line with text = dropdown_text from the drop-down list with xpath = dropdown_xpath and returns True of success or text of error
