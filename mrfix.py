@@ -200,6 +200,31 @@ class MrFixUI:
             # If any other error occurs, return the error message
             return str(e)
 
+
+    @staticmethod
+    def upload_file_by_script(driver, input_xpath, file_path):
+    # - upload file with help of script and with path + file name = "file_path" in element of type "input" with xpath = "input_xpath" and returns True of success or text of error
+        try:
+            # Find the file input element using its XPath
+            file_input = driver.find_element(By.XPATH, input_xpath)
+
+            # Make the element interactable if it's hidden or disabled
+            driver.execute_script("arguments[0].style.display = 'block';", file_input)
+            driver.execute_script("arguments[0].removeAttribute('disabled');", file_input)
+
+            # Set the value of the file input element to the file path
+            driver.execute_script(f"arguments[0].value = '{file_path}';", file_input)
+
+            # Submit the form or perform any other actions necessary
+            # (You may need to adjust this part based on your specific web page)
+
+            # Return True to indicate success
+            return True
+        except Exception as e:
+            # Print any exceptions that occur for debugging
+            print(f"Error: {str(e)}")
+            return False
+
     @staticmethod
     def switch_to_current_window(driver):
         # - swith to current window in browser and returns True or error text
@@ -1007,3 +1032,366 @@ class MrFixUI:
             # Если возникает ошибка, возвращаем False
             print(f"Ошибка: {e}")
             return False
+
+    @staticmethod
+    def get_separator():
+    # get system's separator in files path (It is for example for Windows "\", for Linux "/")
+        return os.altsep
+
+
+class MrFixSQL:
+
+    @staticmethod
+    # Launches OpenVPN with a command with administrator privileges on the Linux command line using the ".ovpn" settings file
+    # Returns a success message or error text
+    def run_openvpn_for_linux(config_path: str, pas: str):
+        try:
+            with sh.contrib.sudo(pas, _with=True):
+                rezult = subprocess.run(['sudo', '-S', 'openvpn', '--client', '--config', config_path])
+
+            return rezult.stderr
+
+        except FileNotFoundError:
+            return "OpenVPN executable not found. Please ensure it is installed and in your system's PATH."
+
+        except subprocess.CalledProcessError as e:
+            return f"OpenVPN connection failed with error: {e}"
+
+
+    @staticmethod
+    # Launches OpenVPN with a command with administrator privileges on the Windows command line using the ".ovpn" settings file
+    # Returns a success message or error text
+    def run_openvpn_for_Windows(config_path: str, pas: str):
+        try:
+            args = ['openvpn', '--client', '--config', config_path]
+            subprocess.run(args, input=pas, check=True, text=True)
+            return "OpenVPN connection established."
+
+        except FileNotFoundError:
+            return "OpenVPN executable not found. Please ensure it is installed and in your system's PATH."
+
+        except subprocess.CalledProcessError as e:
+            return f"OpenVPN connection failed with error: {e}"
+
+
+    @staticmethod
+    # Launches OpenVPN with a command with administrator privileges on the Windows 11 command line using the ".ovpn" settings file
+    # Returns a success message or error text
+    def run_openvpn_for_Windows_11(config_path: str, pas: str):
+        try:
+            rezult = subprocess.run(['openvpn', '--config', config_path], input=pas, encoding='utf-8',
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            return rezult.stderr
+
+        except FileNotFoundError:
+            return "OpenVPN executable not found. Please ensure it is installed and in your system's PATH."
+
+        except subprocess.CalledProcessError as e:
+            return f"OpenVPN connection failed with error: {e}"
+
+
+    @staticmethod
+    # Stops OpenVPN with a command with administrator privileges on the Linux command line
+    # Returns a success message or error text
+    def stop_openvpn_for_linux(pas: str):
+        try:
+            # Use the appropriate command to stop OpenVPN
+            password = pas
+            with sh.contrib.sudo(password, _with=True):
+                subprocess.call(['sudo', 'service', 'openvpn', 'stop'])  # Example command for Linux
+
+            # If you're using a different operating system, you might need to use a different command
+            # For example, on Windows, you could use subprocess.call(['taskkill', '/F', '/IM', 'openvpn.exe'])
+
+            return "OpenVPN stopped successfully."
+
+        except Exception as e:
+            return f"An error occurred while stopping OpenVPN: {e}"
+
+
+    @staticmethod
+    # Stops OpenVPN with a command with administrator privileges on the Windows command line
+    # Returns a success message or error text
+    def stop_openvpn_for_Windows(pas: str):
+        try:
+            # Use the appropriate command to stop OpenVPN
+            password = pas
+            args = ['taskkill', '/F', '/IM', 'openvpn.exe']
+            subprocess.run(args, input=password, check=True, text=True)
+            return "OpenVPN stopped successfully."
+
+        except subprocess.CalledProcessError as e:
+            return f"An error occurred while stopping OpenVPN: {e}"
+
+
+
+    @staticmethod
+    # из таблицы в базе данных PostgreSQL получает все данные по SQL-запросу и сохраняет их в текстовый файл
+    # From a table in the database, PostgreSQL gets all the data for the SQL query and saves it to a text file
+    # (name the file and the full path to it are in txt_file_path). The table is defined by the sql_query SQL query.
+    # The database access parameters are specified in the connection_data dictionary in the values
+    # of the keys "host", "port", "database", "user", "password".
+    # Returns a success message or error text
+    def export_SQL_request_result_table_to_text_file(connection_data: dict, sql_query: str, txt_file_path: str):
+        global connection
+        global cursor
+        try:
+            # Connect to the PostgreSQL database
+            connection = psycopg2.connect(
+                host=connection_data['host'],
+                port=connection_data['port'],
+                database=connection_data['database'],
+                user=connection_data['user'],
+                password=connection_data['password']
+            )
+            # Create a cursor object to execute SQL queries
+            cursor = connection.cursor()
+
+            # Retrieve all data from the specified table
+            cursor.execute(sql_query)
+            data = cursor.fetchall()
+
+            # Save the data to a text file
+            with open(txt_file_path, 'w') as file:
+                for row in data:
+                    file.write(','.join(str(value) for value in row))
+                    file.write('\n')
+
+            return f"Data from table exported to '{txt_file_path}' successfully."
+
+        except psycopg2.Error as e:
+            return f"Error accessing the PostgreSQL database: {e}"
+
+        finally:
+            # Close the cursor and connection
+            cursor.close()
+            connection.close()
+
+
+    @staticmethod
+    # экспорт таблицы из PostgreSQL в csv-файл
+    # Exports a table from PostgreSQL to a csv file
+    # (name the file and the full path to it are in csv_file_path). The table is defined by the sql_query SQL query.
+    #  The database access parameters are specified in the connection_data dictionary in the values
+    #  of the keys "host", "port", "database", "user", "password".
+    # Returns a success message or error text
+    def export_SQL_request_result_table_to_csv_file(connection_data: dict, sql_query: str, csv_file_path: str):
+        global connection
+        global cursor
+        try:
+            # Connect to the PostgreSQL database
+            connection = psycopg2.connect(
+                host = connection_data['host'],
+                port = connection_data['port'],
+                database = connection_data['database'],
+                user = connection_data['user'],
+                password = connection_data['password']
+            )
+            # Create a cursor object to execute SQL queries
+            cursor = connection.cursor()
+
+            # Select all rows from the table
+            cursor.execute(sql_query)
+
+            # Fetch all rows
+            rows = cursor.fetchall()
+
+            # Get the column names
+            column_names = [desc[0] for desc in cursor.description]
+
+            # Write the data to the CSV file
+            with open(csv_file_path, 'w', newline='') as csv_file:
+                writer = csv.writer(csv_file)
+                # Write the column names as the first row
+                writer.writerow(column_names)
+                # Write the data rows
+                writer.writerows(rows)
+
+            return f"Data from table '{table_name}' exported to '{csv_file_path}' successfully."
+
+        except psycopg2.Error as e:
+            return f"Error accessing the PostgreSQL database: {e}"
+
+        finally:
+            # Close the cursor and connection
+            cursor.close()
+            connection.close()
+
+
+    @staticmethod
+    # SQL-запрос на несколько строк со вставкой данных в таблицу
+    # Performs the insertion of several rows of data "data" in PostgreSQL using sql_query SQL query.
+    # The database access parameters are specified in the connection_data dictionary in the values
+    # of the keys "host", "port", "database", "user", "password".
+    # Returns a success message or error text
+    def insert_data_in_postgesql(connection_data: dict, sql_query: str, data: str):
+        global connection
+        global cursor
+        try:
+            # Connect to the PostgreSQL database
+            connection = psycopg2.connect(
+                host=connection_data['host'],
+                port=connection_data['port'],
+                database=connection_data['database'],
+                user=connection_data['user'],
+                password=connection_data['password']
+            )
+            # Create a cursor object to execute SQL queries
+            cursor = connection.cursor()
+
+            # Execute the query for each set of data
+            for row in data:
+                cursor.execute(sql_query, row)
+
+            # Commit the changes to the database
+            connection.commit()
+
+            # Close the cursor and connection
+            cursor.close()
+            connection.close()
+
+            return "Insert data successful"
+
+        except (Exception, psycopg2.Error) as error:
+            return f"Error inserting data: {error}"
+
+        finally:
+            # Close the cursor and connection
+            cursor.close()
+            connection.close()
+
+
+
+    @staticmethod
+    #  изменяет одну запись в таблице и сообщает о результате выполнения (успешно или ошибка)
+    # Changes record in PostgreSQL using sql_query SQL query.
+    # The database access parameters are specified in the connection_data dictionary in the values
+    # of the keys "host", "port", "database", "user", "password".
+    # Returns a success message or error text
+    def modify_record_in_postgesql(connection_data:dict, sql_query:str):
+        global connection
+        global cursor
+        try:
+            # Connect to the PostgreSQL database
+            connection = psycopg2.connect(
+                host=connection_data['host'],
+                port=connection_data['port'],
+                database=connection_data['database'],
+                user=connection_data['user'],
+                password=connection_data['password']
+            )
+            # Create a cursor object to execute SQL queries
+            cursor = connection.cursor()
+
+            # Execute the SQL query to modify the record
+            cursor.execute(sql_query)
+
+            # Commit the changes to the database
+            connection.commit()
+
+            # Check if any rows were affected by the update
+            # Check the number of rows affected
+            if cursor.rowcount > 0:
+                return "Record updated successfully."
+            else:
+                return "No record found to update."
+
+        except (psycopg2.Error, psycopg2.DatabaseError) as error:
+            # Handle the error and return the error message
+            return f"Error occurred: {str(error)}"
+
+        finally:
+            # Close the cursor and connection
+            cursor.close()
+            connection.close()
+
+
+
+    @staticmethod
+    # Searches for data in PostgreSQL using sql_query SQL query.
+    # The database access parameters are specified in the connection_data dictionary in the values
+    # of the keys "host", "port", "database", "user", "password".
+    # Returns a success message or error text
+    def find_record_in_postgresql(connection_data: dict, sql_query: str):
+
+        global connection
+        global cursor
+        try:
+            # Connect to the PostgreSQL database
+            connection = psycopg2.connect(
+                host=connection_data['host'],
+                port=connection_data['port'],
+                database=connection_data['database'],
+                user=connection_data['user'],
+                password=connection_data['password']
+            )
+            # Create a cursor object to execute SQL queries
+            cursor = connection.cursor()
+
+            # Execute the query
+            cursor.execute(sql_query)
+
+            # Fetch the first record found
+            record = cursor.fetchone()
+
+            if record is not None:
+                return record
+            else:
+                return "No record found with the specified parameters."
+
+        except psycopg2.Error as e:
+            return f"Error accessing the PostgreSQL database: {e}"
+
+        finally:
+            # Close the cursor and connection
+            cursor.close()
+            connection.close()
+
+
+class MrFixAPI:
+
+    @staticmethod
+    # Makes POST request with used requests_url (requests url), requests_body (requests body),
+    # requests_headers (requests_headers) and pre_script (pre-request script, optional)
+    # Returns response in JSON file
+    def post_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None):
+    # the method executes the POST request using url = requests_url and header = requests_headers, after executing the pre_script (optional parameter)
+
+        # Execute the pre-script
+        if pre_script != None:
+            exec(pre_script)
+
+        body = json.dumps(requests_body)
+        response = requests.post(requests_url, data=body, headers=requests_headers)
+
+        if response.status_code == 200 or response.status_code == 201:
+            print('POST request successful')
+            print('Response:', response.text)
+            return response.json()
+        else:
+            print('POST request failed')
+            print('Response:', response.text)
+            return response.json()
+
+
+    @staticmethod
+    # Makes GET request with used requests_url (requests url), requests_headers (requests_headers)
+    # Returns response in JSON file
+    def get_request(requests_url: str, requests_headers: dict):
+    # the method executes a GET request using url = requests_url and headers = requests_headers
+
+        # Make the GET request
+        response = requests.get(requests_url, params=requests_headers)
+
+        # Process the response
+        if response.status_code == 200:
+            # Successful request
+            print("Request successful!")
+            print("Response:", response.text)
+            return response.json()
+        else:
+            # Request failed
+            print("Request failed. Status code:", response.status_code)
+            return response.json()
+
