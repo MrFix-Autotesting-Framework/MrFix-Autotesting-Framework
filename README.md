@@ -1,11 +1,16 @@
 Module MrFix
 
+What's new in version 3.0.1 ?
+Added classes MrFixSQL and MrFixAPI. Added methods in these classes.
+
 General information 
 
-The MrFix module is designed to create UI autotests written in Python using the Selenium library.
-MrFix is a module with a set of decorators methods for writing UI-autotests in Python + Selenium. It contains all the basic methods needed to write UI-autotests. It is an open source product. It is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects). Supports the principle of "all in one and in one place". Allows a beginner (and not a beginner either) autotester not to search for a solution through various manuals and websites, but to immediately find it and use proven working methods in the MrFix module.
+The Mr Fix module is designed to create autotests written in Python for testing UI, API and PostgreSQL.
+Mr Fix is a module with a set of decorators methods for writing autotests for frontend and backend. It contains all the basic methods needed to write UI-, API- and SQL-autotests. 
+It is an open source product. It is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects). Supports the principle of "all in one and in one place". 
+Allows a beginner (and not just a beginner) specialist in quality control automation not to search for a solution through various manuals and websites, but to immediately find it and use proven methods of work in the MrFix module.
 
-Also the advantage of the module is:
+The advantages of the module are also:
 
     • reducing the amount of code when using methods of  module;
     
@@ -17,11 +22,85 @@ Link of source code:
 
 https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 
-All methods is static (@staticmethod)
+All methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
-A brief description of the methods (all 49 methods)
+A brief description of the methods of all classes
+
+class MrFixSQL
+
+    def run_openvpn_for_linux(config_path: str, pas: str):
+    # - Launches OpenVPN with a command with administrator privileges on the Linux command line using the ".ovpn" settings file
+    # - Returns a success message or error text
+
+    def run_openvpn_for_Windows(config_path: str, pas: str):
+    # - Launches OpenVPN with a command with administrator privileges on the Windows command line using the ".ovpn" settings file
+    # - Returns a success message or error text
+
+    def run_openvpn_for_Windows_11(config_path: str, pas: str):
+    # - Launches OpenVPN with a command with administrator privileges on the Windows 11 command line using the ".ovpn" settings file
+    # - Returns a success message or error text
+    
+
+    def stop_openvpn_for_linux(pas: str):
+    # - Stops OpenVPN with a command with administrator privileges on the Linux command line
+    # - Returns a success message or error text
+    
+
+    def stop_openvpn_for_Windows(pas: str):
+    # - Stops OpenVPN with a command with administrator privileges on the Windows command line
+    # - Returns a success message or error text
+    
+
+    def export_SQL_request_result_table_to_text_file(connection_data: dict, sql_query: str, txt_file_path: str):
+    # - From a table in the database, PostgreSQL gets all the data for the SQL query and saves it to a text file
+    # - (name the file and the full path to it are in txt_file_path). The table is defined by the sql_query SQL query.
+    # - The database access parameters are specified in the connection_data dictionary in the values
+    # - of the keys "host", "port", "database", "user", "password".
+    # - Returns a success message or error text
+    
+
+    def export_SQL_request_result_table_to_csv_file(connection_data: dict, sql_query: str, csv_file_path: str):
+    # Exports a table from PostgreSQL to a csv file
+    # (name the file and the full path to it are in csv_file_path). The table is defined by the sql_query SQL query.
+    #  The database access parameters are specified in the connection_data dictionary in the values
+    #  of the keys "host", "port", "database", "user", "password".
+    # Returns a success message or error text
+    
+
+    def insert_data_in_postgesql(connection_data: dict, sql_query: str, data: str):
+    # - Performs the insertion of several rows of data "data" in PostgreSQL using sql_query SQL query.
+    # - The database access parameters are specified in the connection_data dictionary in the values
+    # - of the keys "host", "port", "database", "user", "password".
+    # - Returns a success message or error text
+    
+
+    def modify_record_in_postgesql(connection_data:dict, sql_query:str):
+    # - Changes record in PostgreSQL using sql_query SQL query.
+    # - The database access parameters are specified in the connection_data dictionary in the values
+    # - of the keys "host", "port", "database", "user", "password".
+    # - Returns a success message or error text
+    
+
+    def find_record_in_postgresql(connection_data: dict, sql_query: str):
+    # - Searches for data in PostgreSQL using sql_query SQL query.
+    # - The database access parameters are specified in the connection_data dictionary in the values
+    # - of the keys "host", "port", "database", "user", "password".
+    # - Returns a success message or error text
+    
+
+class MrFixAPI
+
+    def post_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None):
+    # - Makes POST request with used requests_url (requests url), requests_body (requests body),
+    # - requests_headers (requests_headers) and pre_script (pre-request script, optional)
+    # - Returns response in JSON file
+
+    def get_request(requests_url: str, requests_headers: dict):
+    # - Makes GET request with used requests_url (requests url), requests_headers (requests_headers)
+    # - Returns response in JSON file
+
 
 class MrFixUI:
 
