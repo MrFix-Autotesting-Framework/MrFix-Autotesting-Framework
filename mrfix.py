@@ -1398,7 +1398,3 @@ class MrFixAPI:
             # Request failed
             print("Request failed. Status code:", response.status_code)
             return response.json()
-
-class MrFixSecurity:
-
-    def check_SQL_injection
