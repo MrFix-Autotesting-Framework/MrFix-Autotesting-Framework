@@ -12,6 +12,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import datetime
 import pyperclip
+import json
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
@@ -19,6 +20,9 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import subprocess
+import psycopg2
+import sh
+import csv
 
 
 
@@ -1176,7 +1180,7 @@ class MrFixSQL:
     #  The database access parameters are specified in the connection_data dictionary in the values
     #  of the keys "host", "port", "database", "user", "password".
     # Returns a success message or error text
-    def export_SQL_request_result_table_to_csv_file(connection_data: dict, sql_query: str, csv_file_path: str):
+    def export_SQL_request_result_table_to_csv_file(connection_data: dict, sql_query: str, table_name: str, csv_file_path: str):
         global connection
         global cursor
         try:
@@ -1395,3 +1399,6 @@ class MrFixAPI:
             print("Request failed. Status code:", response.status_code)
             return response.json()
 
+class MrFixSecurity:
+
+    def check_SQL_injection
