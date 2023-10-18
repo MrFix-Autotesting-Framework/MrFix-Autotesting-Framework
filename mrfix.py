@@ -381,7 +381,7 @@ class MrFixUI:
             action.send_keys(Keys.ARROW_LEFT)
             time.sleep(.1)
         action.perform()
-
+ 
     @staticmethod
     def press_right_arrow_key(driver, n):
         # - presses the ARROW RIGHT key n-times
