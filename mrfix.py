@@ -18,11 +18,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
-import os
 import subprocess
 import psycopg2
 import sh
 import csv
+import socket
+from cryptography.fernet import Fernet
+import os
 
 
 
@@ -381,7 +383,7 @@ class MrFixUI:
             action.send_keys(Keys.ARROW_LEFT)
             time.sleep(.1)
         action.perform()
- 
+
     @staticmethod
     def press_right_arrow_key(driver, n):
         # - presses the ARROW RIGHT key n-times
@@ -1398,3 +1400,122 @@ class MrFixAPI:
             # Request failed
             print("Request failed. Status code:", response.status_code)
             return response.json()
+
+class MrFixSecurity:
+
+    @staticmethod
+    def is_port_open(host, port):
+        # The method checks whether the port number = port (integer value) is open or not
+        # Return "True" or "False"
+
+        try:
+            # Create a socket object
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                # Set a timeout for the connection attempt
+                s.settimeout(1)
+                # Try to connect to the host and port
+                s.connect((host, port))
+            return True  # Port is open
+
+        except (ConnectionRefusedError, socket.timeout):
+            return False  # Port is closed
+
+        except socket.error as e:
+            print(f"An error occurred: {e}")
+            return False  # Port is closed
+
+
+    @staticmethod
+    def check_open_ports(host, ports_list, timeout=1):
+        # The method checks whether each of the ports in the ports_list list is open
+        # (contains integer values of port numbers) or not
+        # Return a dictonary of type: {<port number> : <status - "open" or "closed">, ...}
+        ports_dictonary = {}
+        def check_port(host, port, timeout):
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(timeout)
+                    s.connect((host, port))
+                return "open"
+            except (ConnectionRefusedError, socket.timeout):
+                return "closed"
+            except Exception as e:
+                return str(e)
+
+        for i in range(len(ports_list)):  # Check all possible ports in ports_list
+            result = check_port(host, ports_list[i], timeout)
+            if result == "open":
+                ports_dictonary[ports_list[i]] = "open"
+            elif result == "closed":
+                ports_dictonary[ports_list[i]] = "closed"
+            else:
+                ports_dictonary[ports_list[i]] = f"Error on port {ports_list[i]}: {result}"
+
+        return ports_dictonary
+
+
+    @staticmethod
+    def generate_key(filename):
+        # Generate a random encryption key and save the encryption key to a file
+        # Return "True" or error's text
+
+        try:
+            # Generate a random encryption key
+            key = Fernet.generate_key()
+            # Save the encryption key to a file
+            with open(filename, 'wb') as key_file:
+                key_file.write(key)
+            return True
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def encrypt_file(input_file, output_file, key_file):
+        # Encrypt a file using a given key_file and save the encrypted data to another file
+        # Return "True" or error's text
+
+        try:
+            # Load the encryption key from a file
+            with open(key_file, 'rb') as my_key_file:
+                key = my_key_file.read()
+
+            # Encrypt a file and save the encrypted data to another file
+            fernet = Fernet(key)
+            with open(input_file, 'rb') as file:
+                file_data = file.read()
+                encrypted_data = fernet.encrypt(file_data)
+            with open(output_file, 'wb') as encrypted_file:
+                encrypted_file.write(encrypted_data)
+            return True
+
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def decrypt_file(input_file, output_file, key_file):
+        # - Decrypt a file using a given key and save the decrypted data to another file
+        # - Return "True" or error's text
+
+        try:
+            # Load the encryption key from a file
+            with open(key_file, 'rb') as my_key_file:
+                key = my_key_file.read()
+
+            # Decrypt a file and save the decrypted data to another file
+            fernet = Fernet(key)
+            with open(input_file, 'rb') as encrypted_file:
+                encrypted_data = encrypted_file.read()
+                decrypted_data = fernet.decrypt(encrypted_data)
+            with open(output_file, 'wb') as file:
+                file.write(decrypted_data)
+            return True
+
+        except Exception as e:
+            return str(e)
+
+
+
+
+
+
+
