@@ -1,10 +1,16 @@
 Module MrFix
 
-What's new in version 3.0.2 ? 
-Corrected several mistakes in class MrFixSQL
+What's new in version 4.0.2 ?
+    - Change the description of the methods of class MrFixSecurity
+
+What's new in version 4.0.1 ?
+    - Added class MrFixSecurity. Added methods in this class.
+
+What's new in version 3.0.2 ?
+    - Corrected several mistakes in class MrFixSQL
 
 What's new in version 3.0.1 ?
-Added classes MrFixSQL and MrFixAPI. Added methods in these classes.
+    - Added classes MrFixSQL and MrFixAPI. Added methods in these classes.
 
 General information 
 
@@ -25,11 +31,37 @@ Link of source code:
 
 https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 
+ATTENTION! You can check the security of using the MrFix module on this website:  https://app.snyk.io/advisor/python/mrfix
+
 All methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
 A brief description of the methods of all classes
+
+class MrFixSecurity
+
+    def is_port_open(host, port):
+        # - The method checks whether the port number = port (integer value) is open or not
+        # - Return "True" or "False"
+
+    def check_open_ports(host, ports_list, timeout=1):
+        # - The method checks whether each of the ports in the ports_list list is open
+        # (contains integer values of port numbers) or not
+        # - Return a dictonary of type: {<port number> : <status - "open" or "closed">, ...}
+
+    def generate_key(filename):
+        # - Generate a random encryption key and save the encryption key to a file
+        # - Return "True" or error's text
+
+    def encrypt_file(input_file, output_file, key_file):
+        # - Encrypt a file using a given key_file and save the encrypted data to another file
+        # - Return "True" or error's text
+
+    def decrypt_file(input_file, output_file, key_file):
+        # - Decrypt a file using a given key and save the decrypted data to another file
+        # - Return "True" or error's text
+
 
 class MrFixSQL
 
