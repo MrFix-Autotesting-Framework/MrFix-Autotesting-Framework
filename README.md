@@ -1,5 +1,10 @@
 Module MrFix
 
+What's new in version 5.0.0 ?
+    - Added class MrFixTime. Added methods in this class.
+    - Added a method "change_element_text" in class MrFixUI
+    - Added descriptions of several methods of class MrFixUI
+
 What's new in version 4.0.2 ?
     - Change the description of the methods of class MrFixSecurity
 
@@ -38,6 +43,14 @@ All methods are static (@staticmethod)
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
 A brief description of the methods of all classes
+
+class MrFixTime
+
+    def get_start_time():
+        # - returns the exact current time
+    
+    def get_delta_time(start_time):
+        # - returns the difference between the exact current time and the exact time value obtained earlier (start_time)
 
 class MrFixSecurity
 
@@ -285,5 +298,30 @@ class MrFixUI:
 
     get_last_modified_file(folder):
     # - gets last modifierd file in folder and return file name or text of error
+
+    def get_path_separator():
+    # - returns the character used by the operating system to separate path elements. For Windows – ‘\\’
+
+    def check_page_errors(driver):
+    # - checks for errors on the browser page on the Console and Network tab in the Developer Panel (F12 key)
+
+    def is_element_clickable(driver, xpath):
+    # - checks the clickability of this element
+
+    def is_element_present(driver, xpath):
+    # - checks for element presence
+
+    def set_implicit_waiting_time(driver, time_in_second):
+    # - sets an implicit timeout
+
+    def get_input_value(driver, input_xpath):
+    # - gets the element's input value with element's xpath = input_xpath
+
+    def get_separator():
+    # get system's separator in files path (It is for example for Windows "\", for Linux "/")
+
+    def change_element_text(driver, span_xpath, new_text):
+    # - modify the innerHTML of an element identified by XPath.
+
 
 
