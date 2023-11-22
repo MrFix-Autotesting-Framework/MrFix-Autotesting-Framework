@@ -16,7 +16,6 @@ import json
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
-import requests
 from bs4 import BeautifulSoup
 import subprocess
 import psycopg2
@@ -25,6 +24,8 @@ import csv
 import socket
 from cryptography.fernet import Fernet
 import os
+import requests
+import concurrent.futures
 
 
 
@@ -941,10 +942,12 @@ class MrFixUI:
 
     @staticmethod
     def get_path_separator():
+        # - returns the character used by the operating system to separate path elements. For Windows – ‘\\’
         return os.sep
 
     @staticmethod
     def check_page_errors(driver):
+        # - checks for errors on the browser page on the Console and Network tab in the Developer Panel (F12 key)
         try:
             current_url = driver.current_url
             driver.get(current_url)
@@ -997,6 +1000,7 @@ class MrFixUI:
 
     @staticmethod
     def is_element_clickable(driver, xpath):
+        # - checks the clickability of this element
         try:
             element = WebDriverWait(driver, 1).until(
                 EC.element_to_be_clickable((By.XPATH, xpath))
@@ -1007,6 +1011,7 @@ class MrFixUI:
 
     @staticmethod
     def is_element_present(driver, xpath):
+        # - checks for element presence
         try:
             element = WebDriverWait(driver, 1).until(
                 EC.presence_of_element_located((By.XPATH, xpath))
@@ -1020,29 +1025,51 @@ class MrFixUI:
 
     @staticmethod
     def set_implicit_waiting_time(driver, time_in_second):
+        # - sets an implicit timeout
         driver.implicitly_wait(time_in_second)
 
     @staticmethod
     def get_input_value(driver, input_xpath):
+    # - gets the element's input value with element's xpath = input_xpath
 
         try:
-            # Найти элемент по XPath
+            # Find element by XPath
             input_element = driver.find_element(By.XPATH, input_xpath)
 
-            # Получить значение, введенное в поле input
+            # Get field value
             input_value = input_element.get_attribute('value')
 
             return input_value
 
         except Exception as e:
-            # Если возникает ошибка, возвращаем False
-            print(f"Ошибка: {e}")
+            # If there is an error, return False
+            print(f"Error: {e}")
             return False
 
     @staticmethod
     def get_separator():
     # get system's separator in files path (It is for example for Windows "\", for Linux "/")
         return os.altsep
+
+    @staticmethod
+    def change_element_text(driver, span_xpath, new_text):
+        # Modify the innerHTML of an element identified by XPath.
+        # Parameters:
+        # - driver: Selenium WebDriver instance.
+        # - element_xpath: XPath expression to locate the element.
+        # - new_text: The new text to set as innerHTML.
+        # Example usage:
+        # modify_element_text(browser, "//div[@class='example']", "New Text")
+
+        try:
+            element = driver.find_element(By.XPATH, span_xpath)
+            driver.execute_script('arguments[0].innerHTML = arguments[1];', element, new_text)
+            print(f"Element at XPath '{span_xpath}' modified successfully.")
+            return True
+        except Exception as e:
+            message = f"An error occurred: {e}"
+            print(message)
+            return message
 
 
 class MrFixSQL:
@@ -1514,8 +1541,26 @@ class MrFixSecurity:
             return str(e)
 
 
+class MrFixTime:
 
+    @staticmethod
+    def get_start_time():
+        try:
+            start_time = time.time()
+            return start_time
 
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def get_delta_time(start_time):
+        try:
+            stop_time = time.time()
+            delta_time = stop_time - start_time
+            return delta_time
+
+        except Exception as e:
+            return str(e)
 
 
 
