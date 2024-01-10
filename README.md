@@ -1,5 +1,11 @@
 Module MrFix
 
+What's new in version 6.0.0 ?
+    - Added class MrFixLoad. Added methods in this class.
+    - Added methods "put_request" and "delete_request" in class MrFixAPI
+    - Added descriptions of this methods
+
+
 What's new in version 5.0.0 ?
     - Added class MrFixTime. Added methods in this class.
     - Added a method "change_element_text" in class MrFixUI
@@ -43,6 +49,45 @@ All methods are static (@staticmethod)
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
 A brief description of the methods of all classes
+
+class MrFixLoad
+
+    def run_load_method_of_get_requests_in_range(min_count: int, max_count: int, step: int, url: str)
+        # - This load testing method executes get requests to a specific URL in a loop. 
+        # - All queries at each 
+        # - All queries in each step of the loop are executed in parallel. 
+        # - The number of parallel queries executed for each step of the cycle varies from "min" to "max" with an interval of "step".
+
+        # # Usage example:
+        # requests_url = 'https://reqres.in/api/unknown/2'
+        # min_count = 10
+        # max_count = 11
+        # step = 5
+        # def test_load_get_methods():
+        #     # Calling a method from another module
+        #     asyncio.run(MrFixLoad.run_load_method_of_get_requests_in_range(min_count, max_count, step, requests_url))
+        # test_load_get_methods()
+
+    def run_load_method_of_post_requests_in_range(min_count: int, max_count: int, step: int, url: str, headers: dict, body: dict)
+        # - This load testing method executes post requests to a specific URL in a loop.  
+        # - The queries are all the same, with the same "headers" and "body". 
+        # - All queries at each step of the loop are executed in parallel. 
+        # - The number of parallel queries executed for each step of the loop varies from "min" to "max" with an interval of "step".
+
+        # # Usage example:
+        # requests_url2 = 'https://reqres.in/api/users'
+        # headers = {}
+        # body = {
+             "name": "morpheus",
+             "job": "leader"
+        #    }
+
+        # def test_load_post_methods():
+        #     # Calling a method from another module
+        #     asyncio.run(MrFixLoad.run_load_method_of_post_requests_in_range(min_count, max_count, step, requests_url2,
+                                                                            headers, body))
+        # test_load_post_methods()
+
 
 class MrFixTime
 
@@ -147,6 +192,15 @@ class MrFixAPI
 
     def get_request(requests_url: str, requests_headers: dict):
     # - Makes GET request with used requests_url (requests url), requests_headers (requests_headers)
+    # - Returns response in JSON file
+
+    def put_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None):
+    # - Makes PUT request with used requests_url (requests url), requests_body (requests body),
+    # - requests_headers (requests_headers) and pre_script (pre-request script, optional)
+    # - Returns response in JSON file
+
+    def delete_request(requests_url: str, requests_headers: dict):
+    # - Makes DELETE request with used requests_url (requests url), requests_headers (requests_headers)
     # - Returns response in JSON file
 
 
