@@ -26,6 +26,9 @@ from cryptography.fernet import Fernet
 import os
 import requests
 import concurrent.futures
+import asyncio
+import httpx
+import pytest
 
 
 
@@ -1428,6 +1431,57 @@ class MrFixAPI:
             print("Request failed. Status code:", response.status_code)
             return response.json()
 
+
+    @staticmethod
+    # Makes PUT request with used requests_url (requests url), requests_body (requests body),
+    # requests_headers (requests_headers) and pre_script (pre-request script, optional)
+    # Returns response in JSON format
+    def put_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None):
+        # the method executes the PUT request using url = requests_url and header = requests_headers,
+        # after executing the pre_script (optional parameter)
+
+        # Execute the pre-script
+        if pre_script is not None:
+            exec(pre_script)
+
+        body = json.dumps(requests_body)
+        response = requests.put(requests_url, data=body, headers=requests_headers)
+
+        if response.status_code == 200:
+            print('PUT request successful')
+            print('Response:', response.text)
+            return response.json()
+        else:
+            print('PUT request failed')
+            print('Response:', response.text)
+            return response.json()
+
+
+    @staticmethod
+    # Makes DELETE request with used requests_url (requests url) and requests_headers (request headers)
+    # Returns response in JSON format
+    def delete_request(requests_url: str, requests_headers: dict):
+        # the method executes a DELETE request using url = requests_url and headers = requests_headers
+
+        # Make the DELETE request
+        response = requests.delete(requests_url, headers=requests_headers)
+
+        # Process the response
+        if response.status_code == 200:
+            # Successful request
+            print("DELETE request successful!")
+            print("Response:", response.text)
+            return response.json()
+        else:
+            # Request failed
+            print("DELETE request failed. Status code:", response.status_code)
+            print("Response:", response.text)
+            return response.json()
+
+
+
+
+
 class MrFixSecurity:
 
     @staticmethod
@@ -1561,6 +1615,102 @@ class MrFixTime:
 
         except Exception as e:
             return str(e)
+
+
+
+
+class MrFixLoad:
+    @staticmethod
+    @pytest.mark.asyncio
+    async def make_get_request(url):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url)
+                response.raise_for_status()  # Raise an error for bad responses
+                return url, response.text
+        except Exception as e:
+            return url, f"Error: {str(e)}"
+
+
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def concurrent_get_requests(urls):
+        tasks = [MrFixLoad.make_get_request(url) for url in urls]
+        results = await asyncio.gather(*tasks)
+        return results
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def load_method_of_get_requests(url, n):
+        urls_to_test = [url] * n
+        results_of_requests = await MrFixLoad.concurrent_get_requests(urls_to_test)
+
+        # Output of results
+        print()
+        for url, response_text in results_of_requests:
+            s = f"URL: {url}, Response: {response_text}"
+            print(f'Count = {n},  {s}')
+
+    @staticmethod
+    async def run_load_method_of_get_requests(requests_url, count):
+        await MrFixLoad.load_method_of_get_requests(requests_url, count)
+
+    @staticmethod
+    async def run_load_method_of_get_requests_in_range(min_count: int, max_count: int, step: int, url: str):
+        for i in range(min_count, max_count, step):
+            await MrFixLoad.run_load_method_of_get_requests(url, i)
+
+
+
+
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def make_post_request(url, headers: dict, body: dict):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, headers=headers, data=body)
+                response.raise_for_status()  # Raise an error for bad responses
+                return url, response.text
+        except Exception as e:
+            return url, f"Error: {str(e)}"
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def concurrent_post_requests(urls, headers: dict , body: dict):
+        tasks = [MrFixLoad.make_post_request(url, headers=headers, body=body) for url in urls]
+        results = await asyncio.gather(*tasks)
+        return results
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def load_method_of_post_requests(url, n, headers: dict, body: dict):
+        urls_to_test = [url] * n
+        results_of_requests = await MrFixLoad.concurrent_post_requests(urls_to_test, headers=headers, body=body)
+
+        # Output of results
+        print()
+        for url, response_text in results_of_requests:
+            s = f"URL: {url}, Response: {response_text}"
+            print(f'Count = {n}, {s}')
+
+    @staticmethod
+    async def run_load_method_of_post_requests(requests_url, count, headers: dict, body: dict):
+        await MrFixLoad.load_method_of_post_requests(requests_url, count, headers=headers, body=body)
+
+    @staticmethod
+    async def run_load_method_of_post_requests_in_range(min_count: int, max_count: int, step: int, url: str,
+                                                        headers: dict, body: dict):
+        for i in range(min_count, max_count, step):
+            await MrFixLoad.run_load_method_of_post_requests(url, i, headers=headers, body=body)
+
+
+
+
+
+
+
 
 
 
