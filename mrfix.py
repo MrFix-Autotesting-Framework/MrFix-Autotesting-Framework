@@ -1074,6 +1074,18 @@ class MrFixUI:
             print(message)
             return message
 
+    @staticmethod
+    def delete_disable_attribute(driver, element_xpath):
+        try:
+            element = driver.find_element(By.XPATH, element_xpath)
+            driver.execute_script("arguments[0].removeAttribute('disabled');", element)
+            print(f"Element with XPath '{element_xpath}' enabled now.")
+            return  True
+        except Exception as e:
+            message = f"An error occurred: {e}"
+            print(message)
+            return message
+
 
 class MrFixSQL:
 
@@ -1391,7 +1403,7 @@ class MrFixAPI:
     # Makes POST request with used requests_url (requests url), requests_body (requests body),
     # requests_headers (requests_headers) and pre_script (pre-request script, optional)
     # Returns response in JSON file
-    def post_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None):
+    def post_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None, auth: list = None):
     # the method executes the POST request using url = requests_url and header = requests_headers, after executing the pre_script (optional parameter)
 
         # Execute the pre-script
@@ -1399,7 +1411,7 @@ class MrFixAPI:
             exec(pre_script)
 
         body = json.dumps(requests_body)
-        response = requests.post(requests_url, data=body, headers=requests_headers)
+        response = requests.post(requests_url, auth=auth, data=body, headers=requests_headers)
 
         if response.status_code == 200 or response.status_code == 201:
             print('POST request successful')
@@ -1414,11 +1426,11 @@ class MrFixAPI:
     @staticmethod
     # Makes GET request with used requests_url (requests url), requests_headers (requests_headers)
     # Returns response in JSON file
-    def get_request(requests_url: str, requests_headers: dict):
+    def get_request(requests_url: str, requests_headers: dict, auth: list = None):
     # the method executes a GET request using url = requests_url and headers = requests_headers
 
         # Make the GET request
-        response = requests.get(requests_url, params=requests_headers)
+        response = requests.get(requests_url, auth=auth, params=requests_headers)
 
         # Process the response
         if response.status_code == 200:
@@ -1436,7 +1448,7 @@ class MrFixAPI:
     # Makes PUT request with used requests_url (requests url), requests_body (requests body),
     # requests_headers (requests_headers) and pre_script (pre-request script, optional)
     # Returns response in JSON format
-    def put_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None):
+    def put_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None, auth: list = None):
         # the method executes the PUT request using url = requests_url and header = requests_headers,
         # after executing the pre_script (optional parameter)
 
@@ -1445,7 +1457,7 @@ class MrFixAPI:
             exec(pre_script)
 
         body = json.dumps(requests_body)
-        response = requests.put(requests_url, data=body, headers=requests_headers)
+        response = requests.put(requests_url, auth=auth, data=body, headers=requests_headers)
 
         if response.status_code == 200:
             print('PUT request successful')
@@ -1460,11 +1472,11 @@ class MrFixAPI:
     @staticmethod
     # Makes DELETE request with used requests_url (requests url) and requests_headers (request headers)
     # Returns response in JSON format
-    def delete_request(requests_url: str, requests_headers: dict):
+    def delete_request(requests_url: str, requests_headers: dict, auth: list = None):
         # the method executes a DELETE request using url = requests_url and headers = requests_headers
 
         # Make the DELETE request
-        response = requests.delete(requests_url, headers=requests_headers)
+        response = requests.delete(requests_url, headers=requests_headers, auth=auth)
 
         # Process the response
         if response.status_code == 200:
