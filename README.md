@@ -1,5 +1,49 @@
 Module MrFix
 
+General information 
+
+The Mr Fix module is designed to create autotests written in Python for testing UI, API, PostgreSQL, Security and Loading.
+Mr Fix is a module with a set of decorators methods for writing autotests for frontend and backend. It contains all the basic methods needed to write UI-, API- and SQL-autotests. 
+It is an open source product. It is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects). Supports the principle of "all in one and in one place". 
+Allows a beginner (and not just a beginner) specialist in quality control automation not to search for a solution through various manuals and websites, but to immediately find it and use proven methods of work in the MrFix module.
+
+The advantages of the module are also:
+
+    • reducing the amount of code when using methods of  module;
+    
+    • a great concentration of the autotester on the correct implementation of the autotest logic, and not on the technical part of autotest;
+    
+    • the uniformity of the approach of all methods to the form of organization of input data, which simplifies the memorization and application of methods of module
+    
+Link of source code:
+
+https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
+
+ATTENTION! You can check the security of using the MrFix module on this website:  https://app.snyk.io/advisor/python/mrfix
+
+All methods are static (@staticmethod)
+
+If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in version 6.0.2 ?
+    - The descriptions of the following methods have been changed:
+        post_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None, auth: list = None)
+        get_request(requests_url: str, requests_headers: dict, auth: list = None)
+        put_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None, auth: list = None)
+        delete_request(requests_url: str, requests_headers: dict, auth: list = None)
+
+
+What's new in version 6.0.1 ?
+    - Added in class MrFixUI a method "delete_disable_attribute"
+    - Added the ability to add authorization to methods for API requests (optional parameter: auth : list = None 
+        as a list of two values: login and password, for example auth = (login, password)). The authorization parameter
+        has been added for the following methods:
+
+        post_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None, auth: list = None)
+        get_request(requests_url: str, requests_headers: dict, auth: list = None)
+        put_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None, auth: list = None)
+        delete_request(requests_url: str, requests_headers: dict, auth: list = None)
+
 What's new in version 6.0.0 ?
     - Added class MrFixLoad. Added methods in this class.
     - Added methods "put_request" and "delete_request" in class MrFixAPI
@@ -23,30 +67,7 @@ What's new in version 3.0.2 ?
 What's new in version 3.0.1 ?
     - Added classes MrFixSQL and MrFixAPI. Added methods in these classes.
 
-General information 
 
-The Mr Fix module is designed to create autotests written in Python for testing UI, API and PostgreSQL.
-Mr Fix is a module with a set of decorators methods for writing autotests for frontend and backend. It contains all the basic methods needed to write UI-, API- and SQL-autotests. 
-It is an open source product. It is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects). Supports the principle of "all in one and in one place". 
-Allows a beginner (and not just a beginner) specialist in quality control automation not to search for a solution through various manuals and websites, but to immediately find it and use proven methods of work in the MrFix module.
-
-The advantages of the module are also:
-
-    • reducing the amount of code when using methods of  module;
-    
-    • a great concentration of the autotester on the correct implementation of the autotest logic, and not on the technical part of autotest;
-    
-    • the uniformity of the approach of all methods to the form of organization of input data, which simplifies the memorization and application of methods of module
-    
-Link of source code:
-
-https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
-
-ATTENTION! You can check the security of using the MrFix module on this website:  https://app.snyk.io/advisor/python/mrfix
-
-All methods are static (@staticmethod)
-
-If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
 A brief description of the methods of all classes
 
@@ -59,7 +80,7 @@ class MrFixLoad
         # - The number of parallel queries executed for each step of the cycle varies from "min" to "max" with an interval of "step".
 
         # # Usage example:
-        # requests_url = 'https://reqres.in/api/unknown/2'
+        # requests_url = '<your url for request>'
         # min_count = 10
         # max_count = 11
         # step = 5
@@ -75,11 +96,11 @@ class MrFixLoad
         # - The number of parallel queries executed for each step of the loop varies from "min" to "max" with an interval of "step".
 
         # # Usage example:
-        # requests_url2 = 'https://reqres.in/api/users'
+        # requests_url2 = '<your url for request>'
         # headers = {}
         # body = {
-             "name": "morpheus",
-             "job": "leader"
+             "parametr1": "value1",  # for str type
+             "parametr2": value2     # for int and another type
         #    }
 
         # def test_load_post_methods():
@@ -185,26 +206,31 @@ class MrFixSQL
 
 class MrFixAPI
 
-    def post_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None):
+    def post_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None, auth: list = None)):
     # - Makes POST request with used requests_url (requests url), requests_body (requests body),
-    # - requests_headers (requests_headers) and pre_script (pre-request script, optional)
+    # - requests_headers (requests_headers) pre_script (pre-request script, optional), auth (authorization, optional)
     # - Returns response in JSON file
 
     def get_request(requests_url: str, requests_headers: dict):
-    # - Makes GET request with used requests_url (requests url), requests_headers (requests_headers)
+    # - Makes GET request with used requests_url (requests url), requests_headers (requests_headers),
+    # - auth (authorization, optional)
     # - Returns response in JSON file
 
     def put_request(requests_url: str, requests_body: dict, requests_headers: dict, pre_script: str = None):
     # - Makes PUT request with used requests_url (requests url), requests_body (requests body),
-    # - requests_headers (requests_headers) and pre_script (pre-request script, optional)
+    # - requests_headers (requests_headers), pre_script (pre-request script, optional), auth (authorization, optional)
     # - Returns response in JSON file
 
     def delete_request(requests_url: str, requests_headers: dict):
-    # - Makes DELETE request with used requests_url (requests url), requests_headers (requests_headers)
+    # - Makes DELETE request with used requests_url (requests url), requests_headers (requests_headers),
+    # - auth (authorization, optional)
     # - Returns response in JSON file
 
 
 class MrFixUI:
+
+    delete_disable_attribute(driver, element_xpath):
+    # - this method delete attribute "disable" of element with xpath = element_xpath, if this attribute exists, and return True or error's text
 
     check_exists_xpath(driver, check_xpath):
     # - checks the existence of an element with xpath = check_xpath and returns True or False
