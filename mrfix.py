@@ -18,7 +18,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
 from bs4 import BeautifulSoup
 import subprocess
-import psycopg2
+import psycopg2    # pip install psycopg2-binary
 import sh
 import csv
 import socket
@@ -1085,9 +1085,62 @@ class MrFixUI:
             message = f"An error occurred: {e}"
             print(message)
             return message
+            
+
+    @staticmethod
+    def get_text_list_in_select(driver, select_xpath):
+        try:
+            #Find the select element by its xpath
+            select_element = driver.find_element_by_xpath(select_xpath)
+
+            # Get all option elements inside the select
+            options = select_element.find_elements_by_tag_name("option")
+
+            # Create an empty list to store the text values
+            text_values_list = []
+
+            # Extract text from each option element and add it to the list
+            for option in options:
+                text_values_list.append(option.text)
+
+            # Return this list
+            return text_values_list
+
+        except NoSuchElementException:
+            # If the element is not found, return an error code
+            return f"Element with xpath {select_xpath} not found"
+        except Exception as e:
+            # If other errors occur, return an error message
+            return f"An error occurred: {e}"
+
 
 
 class MrFixSQL:
+
+    @staticmethod
+    def run_openvpn_commands(ovpn_file):
+        try:
+            # Stop the OpenVPN service
+            stop_command = "sudo systemctl stop openvpn@server"
+            subprocess.run(stop_command, shell=True, check=True)
+
+            # Enable the OpenVPN service
+            enable_command = "sudo systemctl enable openvpn@server.service"
+            subprocess.run(enable_command, shell=True, check=True)
+
+            # Start OpenVPN client with the specified configuration file
+            config_file = ovpn_file
+            openvpn_command = f"sudo openvpn --client --config {config_file}"
+            subprocess.run(openvpn_command, shell=True, check=True)
+
+            # If all commands succeed, return True
+            return True
+
+        except subprocess.CalledProcessError as e:
+            # If any command fails, return the error message
+            return f"Error: {e}"
+
+
 
     @staticmethod
     # Launches OpenVPN with a command with administrator privileges on the Linux command line using the ".ovpn" settings file
