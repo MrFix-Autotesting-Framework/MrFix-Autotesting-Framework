@@ -1091,10 +1091,10 @@ class MrFixUI:
     def get_text_list_in_select(driver, select_xpath):
         try:
             #Find the select element by its xpath
-            select_element = driver.find_element_by_xpath(select_xpath)
+            select_element = driver.find_element(By.XPATH, select_xpath)
 
             # Get all option elements inside the select
-            options = select_element.find_elements_by_tag_name("option")
+            options = select_element.find_elements(By.TAG_NAME, "option")
 
             # Create an empty list to store the text values
             text_values_list = []
