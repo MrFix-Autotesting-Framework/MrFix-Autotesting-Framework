@@ -2,7 +2,7 @@ Module MrFix
 
 General information 
 
-The Mr Fix module is designed to create autotests written in Python for testing UI, API, PostgreSQL, Security and Loading.
+The Mr Fix module is designed to create autotests written in Python for testing UI, API, PostgreSQL, Security and Perfomance Testing.
 Mr Fix is a module with a set of decorators methods for writing autotests for frontend and backend. It contains all the basic methods needed to write UI-, API- and SQL-autotests. 
 It is an open source product. It is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects). Supports the principle of "all in one and in one place". 
 Allows a beginner (and not just a beginner) specialist in quality control automation not to search for a solution through various manuals and websites, but to immediately find it and use proven methods of work in the MrFix module.
@@ -24,6 +24,10 @@ ATTENTION! You can check the security of using the MrFix module on this website:
 All methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in version 6.0.3 ?
+    - Added the method get_text_list_in_select(driver, select_xpath) in class MrFixUI
+        This method This method returns, as a list of text strings, a list of all dropdown list values with xpath = select_xpath if successful, or error text otherwise.
 
 What's new in version 6.0.2 ?
     - The descriptions of the following methods have been changed:
@@ -403,5 +407,7 @@ class MrFixUI:
     def change_element_text(driver, span_xpath, new_text):
     # - modify the innerHTML of an element identified by XPath.
 
+    def get_text_list_in_select(driver, select_xpath):
+    # - get the list of text of element with type "select'
 
 
