@@ -19,11 +19,15 @@ Link of source code:
 
 https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 
-ATTENTION! You can check the security of using the MrFix module on this website:  https://app.snyk.io/advisor/python/mrfix
-
 All methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in version 6.0.5 ?
+    - Fixed bugs in a new method 
+
+What's new in version 6.0.4 ?
+    - Code optimization, fixed bugs
 
 What's new in version 6.0.3 ?
     - Added the method get_text_list_in_select(driver, select_xpath) in class MrFixUI
