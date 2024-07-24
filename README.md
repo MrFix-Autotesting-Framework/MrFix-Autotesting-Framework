@@ -7,6 +7,14 @@ Mr Fix is a module with a set of decorators methods for writing autotests for fr
 It is an open source product. It is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects). Supports the principle of "all in one and in one place". 
 Allows a beginner (and not just a beginner) specialist in quality control automation not to search for a solution through various manuals and websites, but to immediately find it and use proven methods of work in the MrFix module.
 
+
+All versions of the mrfix module are safe to install in a corporate environment. Here's what it says, for example, about the previous version:
+"The latest version of mrfix with no known security vulnerabilities is 6.0.5. We recommend installing version 6.0.5.
+The information on this page was curated by experts in our Cybersecurity Intelligence Team."            
+
+                                                    Safety CLI Cybersecurity Inc
+                                                    https://data.safetycli.com/packages/pypi/mrfix/
+
 The advantages of the module are also:
 
     • reducing the amount of code when using methods of  module;
@@ -22,6 +30,9 @@ https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 All methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in version 6.0.6 ?
+    - Minor fixes to optimize the performance of the MrFix module on Windows. Some modules imported into mrfix are only available for Linux and cannot be imported into Windows. Previously, this could lead to problems with the module's operation MrFix in Windows.
 
 What's new in version 6.0.5 ?
     - Fixed bugs in a new method 
