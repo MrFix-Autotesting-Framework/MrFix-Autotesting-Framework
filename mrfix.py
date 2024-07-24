@@ -19,7 +19,9 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import subprocess
 import psycopg2    # pip install psycopg2-binary
-import sh
+import os
+if os.name != 'nt':
+    import sh
 import csv
 import socket
 from cryptography.fernet import Fernet
