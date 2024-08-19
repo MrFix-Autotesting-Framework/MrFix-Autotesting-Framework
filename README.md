@@ -31,6 +31,12 @@ All methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in version 6.1.0 ?
+    - Added 3 methods for work of cookies: 
+            get_all_cookies(driver) - this method receives all cookies
+            set_cookies(driver, cookies_dict) - this method installs cookies from cookies_dict
+            delete_cookies(driver, cookies_key) - this method deletes cookies by cookies_key
+
 What's new in version 6.0.6 ?
     - Minor fixes to optimize the performance of the MrFix module on Windows. Some modules imported into mrfix are only available for Linux and cannot be imported into Windows. Previously, this could lead to problems with the module's operation MrFix in Windows.
 
@@ -250,6 +256,15 @@ class MrFixUI:
 
     delete_disable_attribute(driver, element_xpath):
     # - this method delete attribute "disable" of element with xpath = element_xpath, if this attribute exists, and return True or error's text
+
+    get_all_cookies(driver)
+    # - this method receives all cookies
+    
+    set_cookies(driver, cookies_dict)
+    # - this method installs cookies from cookies_dict
+    
+    delete_cookies(driver, cookies_key)
+    # - this method deletes cookies by cookies_key
 
     check_exists_xpath(driver, check_xpath):
     # - checks the existence of an element with xpath = check_xpath and returns True or False
