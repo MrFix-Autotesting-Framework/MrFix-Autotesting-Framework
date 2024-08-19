@@ -1115,7 +1115,38 @@ class MrFixUI:
             # If other errors occur, return an error message
             return f"An error occurred: {e}"
 
+    @staticmethod
+    def get_all_cookies(driver):
+        # - this method receives all cookies
+        try:
+            # Get all cookies
+            cookies = driver.get_cookies()
+            return cookies
+        except Exception as e:
+            # If other errors occur, return an error message
+            return f"Error: {str(e)}"
 
+    @staticmethod
+    def set_cookies(driver, cookies_dict):
+        # - this method installs cookies from cookies_dict
+        try:
+            # Set cookies
+            driver.add_cookie(cookies_dict)
+            return True
+        except Exception as e:
+            # If other errors occur, return an error message
+            return f"Error: {str(e)}"
+
+    @staticmethod
+    def delete_cookies(driver, cookies_key):
+        # - this method deletes cookies by cookies_key
+        try:
+            # Delete cookies
+            driver.delete_cookie(cookies_key)
+            return True
+        except Exception as e:
+            # If other errors occur, return an error message
+            return f"Error: {str(e)}"
 
 class MrFixSQL:
 
