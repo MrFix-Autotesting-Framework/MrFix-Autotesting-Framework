@@ -34,6 +34,7 @@ If there is a variable "driver" in the method, it is a variable of the Selenium 
 What's new in version 6.1.1 ?
     - Due to the change in access to the clipboard in Google Chrome, a new method has been created for inserting text from the clipboard into the input field on the browser page
         insert_from_clipboard(browser, input_xpath)
+        
 What's new in version 6.1.0 ?
     - Added 3 methods for work of cookies: 
             get_all_cookies(driver) - this method receives all cookies
