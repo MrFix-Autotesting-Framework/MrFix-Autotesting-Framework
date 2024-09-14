@@ -1148,6 +1148,29 @@ class MrFixUI:
             # If other errors occur, return an error message
             return f"Error: {str(e)}"
 
+    @staticmethod
+    def insert_from_clipboard(browser, input_xpath):
+    # This method for inserting text from the clipboard into the input field
+    # on a web page in the field with xpath = input_xpath
+        try:
+            # Check permission to read from the buffer in the browser
+            browser.execute_script(
+                "navigator.permissions.query({name: 'clipboard-read'}).then(permissionStatus => "
+                "{if (permissionStatus.state == 'denied') {console.log('Permission to read clipboard denied.');}});")
+
+            rezult = MrFixUI.click_element_by_xpath(browser, input_xpath)
+            if rezult != True: return "Checking permission to read from the buffer in the browser - False"
+
+            # Simulating keystrokes to copy text
+            actions = ActionChains(browser)
+            actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+            return True
+
+        except Exception as e:
+            # If other errors occur, return an error message
+            return f"Error: {str(e)}"
+
+
 class MrFixSQL:
 
     @staticmethod
