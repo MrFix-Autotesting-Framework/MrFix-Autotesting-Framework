@@ -31,6 +31,9 @@ All methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in version 6.1.1 ?
+    - Due to the change in access to the clipboard in Google Chrome, a new method has been created for inserting text from the clipboard into the input field on the browser page
+        insert_from_clipboard(browser, input_xpath)
 What's new in version 6.1.0 ?
     - Added 3 methods for work of cookies: 
             get_all_cookies(driver) - this method receives all cookies
@@ -253,6 +256,10 @@ class MrFixAPI
 
 
 class MrFixUI:
+
+    insert_from_clipboard(driver, input_xpath):
+    # This method for inserting text from the clipboard into the input field
+    # on a web page in the field with xpath = input_xpath
 
     delete_disable_attribute(driver, element_xpath):
     # - this method delete attribute "disable" of element with xpath = element_xpath, if this attribute exists, and return True or error's text
