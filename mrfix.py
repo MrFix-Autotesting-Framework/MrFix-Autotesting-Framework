@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
+from loguru import logger
 import datetime
 import pyperclip
 import json
@@ -31,6 +32,7 @@ import concurrent.futures
 import asyncio
 import httpx
 import pytest
+import pathlib
 
 
 
@@ -1738,8 +1740,6 @@ class MrFixTime:
             return str(e)
 
 
-
-
 class MrFixLoad:
     @staticmethod
     @pytest.mark.asyncio
@@ -1751,8 +1751,6 @@ class MrFixLoad:
                 return url, response.text
         except Exception as e:
             return url, f"Error: {str(e)}"
-
-
 
     @staticmethod
     @pytest.mark.asyncio
@@ -1781,10 +1779,6 @@ class MrFixLoad:
     async def run_load_method_of_get_requests_in_range(min_count: int, max_count: int, step: int, url: str):
         for i in range(min_count, max_count, step):
             await MrFixLoad.run_load_method_of_get_requests(url, i)
-
-
-
-
 
     @staticmethod
     @pytest.mark.asyncio
@@ -1827,10 +1821,112 @@ class MrFixLoad:
             await MrFixLoad.run_load_method_of_post_requests(url, i, headers=headers, body=body)
 
 
+class MrBrowserManager:
+    def __init__(self, config_browser='chrome', width="1920", high="1080", wait_time=20, headless=False):
+        self.config_browser = config_browser
+        self.width = width
+        self.high = high
+        self.headless = headless
+        self.wait_time = wait_time
+        self.driver = None
+
+    def get_driver(self, width, high, headless):
+        directory = os.path.abspath(os.curdir)
+
+        # Initialize the driver based on the selected browser
+        if self.config_browser == 'chrome':
+            options = webdriver.ChromeOptions()
+            downloads_path = os.path.join(str(pathlib.Path.cwd()), 'downloads')
+
+            # Set preferences for Chrome, such as download directory and security settings
+            prefs = {
+                "download.default_directory": downloads_path,
+                "download.prompt_for_download": False,
+                "download.directory_upgrade": True,
+                "safebrowsing.enabled": True
+            }
+            options.add_experimental_option("prefs", prefs)
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--disable-extensions")
+            options.add_argument(f"--window-size={width},{high}")
+
+            # Enable headless mode if specified
+            if headless:
+                options.add_argument('--headless')
+
+            # Set path to Chrome binary if the OS is not Windows
+            if os.name != 'nt':
+                options.binary_location = '/opt/google/chrome'
+
+            # Create Chrome driver with specified options
+            self.driver = webdriver.Chrome(options=options)
+
+        elif self.config_browser == 'firefox':
+            options = webdriver.FirefoxOptions()
+
+            # Enable reading from clipboard in Firefox
+            options.add_argument("--enable-features=ClipboardReadWrite")
+
+            # Set download preferences for Firefox
+            options.set_preference("browser.download.dir", directory)
+            options.set_preference("browser.download.folderList", 2)  # Use custom download directory
+            options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream")
+            options.add_argument(f'--width={width}')
+            options.add_argument(f'--height={high}')
+
+            # Set path to Firefox binary if the OS is not Windows
+            if os.name != 'nt':
+                options.binary_location = '/usr/bin/firefox'
+
+            # Create Firefox driver with specified options
+            self.driver = webdriver.Firefox(options=options)
+        else:
+            # Raise an error if an unsupported browser is specified
+            raise Exception(f'"{self.config_browser}" is not a supported browser')
+
+        # Set an implicit wait for the driver
+        self.driver.implicitly_wait(self.wait_time)
+        return self.driver
+
+    def quit_driver(self):
+        # Quit the driver if it exists
+        if self.driver:
+            self.driver.quit()
 
 
+class MrLoggerHelper:
+    @staticmethod
+    @pytest.fixture(autouse=True)
+    def add_logger(request):
+        # Configuration for logging
+        Rep = pathlib.Path.cwd()
+        Repoz = str(Rep)
+        logs_catalog = os.path.join(Repoz, 'logs')
+        prefix_name = 'log_'
+        today = str(datetime.datetime.today())
 
+        if os.name == 'nt':
+            today = today.replace(':', '_')
 
+        logger.info('# Setting the log file name')
+        main_test_file = os.path.basename(request.module.__file__)
+
+        global log_file_name
+        log_file_name = os.path.join(logs_catalog, f"{main_test_file}---{prefix_name}{today}.txt")
+
+        logger.remove()
+        logger.add(log_file_name, level='INFO', format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
+        logger.info('# Recording test start date and time: ' + datetime.datetime.today().strftime('%d.%m.%Y'))
+
+        logger_instance = logger
+        os.environ['test_status'] = '0'
+        os.environ['test_case_id'] = ''
+
+        yield logger_instance
+
+        # Additional actions to complete the test
+        pass
 
 
 
