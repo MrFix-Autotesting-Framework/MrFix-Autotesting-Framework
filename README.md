@@ -27,14 +27,20 @@ Link of source code:
 
 https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 
-All methods are static (@staticmethod)
+Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in version 7.0.0 ?
+    - Added installation of all necessary additional libraries when installing MrFix itself.
+    - Added MrBrowserManager class for setting browser settings in conftest.py file.
+    - Added "get_driver" method as a fixture for setting Google Chrome and Firefox browser settings for tests and passing the "driver" variable to UI tests
+    - Added MrLoggerHelper class for configuring logging settings in conftest.py file and using it in tests.
+    - Added "add_logger" method as a fixture for setting logging settings for tests and passing the "add_logger" method and "log_file_name" variable to tests
 
 What's new in version 6.1.1 ?
     - Due to the change in access to the clipboard in Google Chrome, a new method has been created for inserting text from the clipboard into the input field on the browser page
         insert_from_clipboard(browser, input_xpath)
-        
 What's new in version 6.1.0 ?
     - Added 3 methods for work of cookies: 
             get_all_cookies(driver) - this method receives all cookies
@@ -99,6 +105,56 @@ What's new in version 3.0.1 ?
 
 
 A brief description of the methods of all classes
+
+class MrBrowserManager:
+
+    def get_driver(self, width, high, headless):
+        # - returns fixture "driver" for UI tests
+        # - width - this is the width of the browser window in pixels when you run your tests (for example: "1920")
+        # - high - this is the high of the browser window in pixels when you run your tests (for example: "1080")
+        # - headless - this is set headless mode for browser in UI tests (for example: False)
+        #
+        # For example: how to use this method in conftest.py:
+        # 
+        #    from mrfix.mrfix import MrBrowserManager
+        #
+        #    @pytest.fixture
+        #    def browser():
+        #        manager = BrowserManager(config_browser='chrome', wait_time = 20)  # или 'firefox'
+        #        driver = manager.get_driver(width="1920", high="1080", headless=False)
+        #    
+        #        # Transferring the driver to the tests
+        #        yield driver
+        #    
+        #        # End of the session
+        #        manager.quit_driver()
+        #
+        # For example: how to use this method in test:
+        #
+        # def test(browser):
+        #
+        #   start_url = 'google.com'
+        #   browser.get(start_url)
+
+
+class MrLoggerHelper:
+
+    def add_logger(request):
+        # - returns the "add_logger" method for logging tests
+        #
+        # For example: how to use this method in conftest.py:
+        # 
+        #    from mrfix.mrfix import MrLoggerHelper
+        #
+        #    # To have pytest automatically use the `add_logger` fixture
+        #    add_logger = LoggerHelper.add_logger
+        #
+        # For example: how to use in test:
+        #
+        # def test(browser, add_logger):
+        #    my_message = "Hi, I'm starting this test"
+        #    add_logger.info(f'My message: {my_message}')
+
 
 class MrFixLoad
 
