@@ -1904,7 +1904,7 @@ class MrLoggerHelper:
         Repoz = str(Rep)
         logs_catalog = os.path.join(Repoz, 'logs')
         prefix_name = 'log_'
-        today = str(datetime.datetime.today())
+        today = str(datetime.today())
 
         if os.name == 'nt':
             today = today.replace(':', '_')
@@ -1917,7 +1917,7 @@ class MrLoggerHelper:
 
         logger.remove()
         logger.add(log_file_name, level='INFO', format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
-        logger.info('# Recording test start date and time: ' + datetime.datetime.today().strftime('%d.%m.%Y'))
+        logger.info('# Recording test start date and time: ' + datetime.today().strftime('%d.%m.%Y'))
 
         logger_instance = logger
         os.environ['test_status'] = '0'
