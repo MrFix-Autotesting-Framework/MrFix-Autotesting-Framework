@@ -31,6 +31,9 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in version 7.0.1 ?
+    - Fixed bugs in a new method "add_logger"
+
 What's new in version 7.0.0 ?
     - Added installation of all necessary additional libraries when installing MrFix itself.
     - Added MrBrowserManager class for setting browser settings in conftest.py file.
