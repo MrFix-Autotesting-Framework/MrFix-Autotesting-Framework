@@ -1170,7 +1170,7 @@ class MrFixUI:
 
         except Exception as e:
             # If other errors occur, return an error message
-            return f"Error: {str(e)}"
+            return f"Error: {str(e)}" 
 
     @staticmethod
     def scroll_to_element(browser, xpath):
