@@ -1172,6 +1172,24 @@ class MrFixUI:
             # If other errors occur, return an error message
             return f"Error: {str(e)}"
 
+    @staticmethod
+    def scroll_to_element(browser, xpath):
+        """
+        Finds an element by the specified XPath and smoothly scrolls to it.
+
+        :param browser: WebDriver - Selenium browser object.
+        :param xpath: str - XPath of the element to scroll to.
+        """
+        try:
+            # Find the element
+            element = browser.find_element(By.XPATH, xpath)
+            # Scroll to the element
+            browser.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element)
+            return True
+        except Exception as e:
+            # Handle errors
+            print(f"Error while scrolling to the element: {e}")
+
 
 class MrFixSQL:
 
