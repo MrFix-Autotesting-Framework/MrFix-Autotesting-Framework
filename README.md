@@ -31,6 +31,9 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in version 7.0.4 ?
+    - The list of required packages additionally installed during mrfix installation has been corrected
+
 What's new in version 7.0.3 ?
     - Changed "setup.py" file to install additional packages
 
