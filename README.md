@@ -31,6 +31,21 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in version 7.0.3 ?
+    - Changed "setup.py" file to install additional packages
+
+What's new in version 7.0.2 ?
+    - Added a 'scroll_to_element' method that finds an element by the specified XPath and smoothly scrolls to it.
+
+            @staticmethod
+            def scroll_to_element(browser, xpath):
+                """
+                Finds an element by the specified XPath and smoothly scrolls to it.
+        
+                :param browser: WebDriver - Selenium browser object.
+                :param xpath: str - XPath of the element to scroll to.
+                """
+
 What's new in version 7.0.1 ?
     - Fixed bugs in a new method "add_logger"
 
