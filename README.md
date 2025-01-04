@@ -31,6 +31,12 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in version 8.0.1 ?
+    - Added class MrPerformance.
+    - Added two methods to the MrPerformance class: "install_newman" and "performance_testing_with_postman_collections".
+    - The "install_newman" method is a universal solution for installing Node.js, npm, and Newman on any OS (Windows, Linux, macOS).
+    - The "performance_testing_with_postman_collections" method performs load testing of APIs using Newman for Postman collections. It automatically simulates API requests, measures performance, logs successes and failures, and generates statistics. It supports two execution modes (AABB and ABAB) and saves results in reports for analysis.
+
 What's new in version 7.0.4 ?
     - The list of required packages additionally installed during mrfix installation has been corrected
 
@@ -38,7 +44,7 @@ What's new in version 7.0.3 ?
     - Changed "setup.py" file to install additional packages
 
 What's new in version 7.0.2 ?
-    - Added a 'scroll_to_element' method that finds an element by the specified XPath and smoothly scrolls to it.
+    - Added a "scroll_to_element" method that finds an element by the specified XPath and smoothly scrolls to it.
 
             @staticmethod
             def scroll_to_element(browser, xpath):
