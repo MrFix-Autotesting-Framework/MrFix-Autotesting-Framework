@@ -1,3 +1,6 @@
+import sys
+import shutil
+from collections import defaultdict
 import time
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -1170,7 +1173,7 @@ class MrFixUI:
 
         except Exception as e:
             # If other errors occur, return an error message
-            return f"Error: {str(e)}" 
+            return f"Error: {str(e)}"
 
     @staticmethod
     def scroll_to_element(browser, xpath):
@@ -1945,6 +1948,280 @@ class MrLoggerHelper:
 
         # Additional actions to complete the test
         pass
+
+class MrPerformance:
+    @staticmethod
+    def install_newman():
+        """
+        Universal method for installing Node.js, npm, and Newman on any OS (Windows, Linux, macOS).
+        """
+
+        def is_tool_installed(tool):
+            """
+            Checks if a tool (Node.js, npm, or Newman) is installed.
+            """
+            try:
+                subprocess.run([tool, "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+                return True
+            except (OSError, subprocess.CalledProcessError):
+                return False
+
+        def install_nodejs():
+            """
+            Automatically installs Node.js depending on the OS.
+            """
+            if sys.platform.startswith("win"):
+                print("Installing Node.js for Windows...")
+                node_installer_url = "https://nodejs.org/dist/v18.18.2/node-v18.18.2-x64.msi"
+                installer_path = os.path.join(os.getcwd(), "node_installer.msi")
+                subprocess.run(["curl", "-o", installer_path, node_installer_url], check=True)
+                subprocess.run(["msiexec", "/i", installer_path, "/quiet", "/norestart"], check=True)
+                os.remove(installer_path)
+            elif sys.platform.startswith("darwin"):
+                print("Installing Node.js for macOS...")
+                subprocess.run(["brew", "install", "node"], check=True)
+            elif sys.platform.startswith("linux"):
+                print("Installing Node.js for Linux...")
+                distro = subprocess.run(["lsb_release", "-is"], stdout=subprocess.PIPE).stdout.decode().strip().lower()
+                if distro in ["ubuntu", "debian"]:
+                    subprocess.run(["sudo", "apt", "update"], check=True)
+                    subprocess.run(["sudo", "apt", "install", "-y", "nodejs"], check=True)
+                elif distro in ["centos", "fedora", "redhat"]:
+                    subprocess.run(["sudo", "dnf", "install", "-y", "nodejs"], check=True)
+                elif distro == "arch":
+                    subprocess.run(["sudo", "pacman", "-S", "--noconfirm", "nodejs"], check=True)
+                else:
+                    print("Unknown Linux distribution. Please install Node.js manually from https://nodejs.org/")
+                    sys.exit(1)
+            else:
+                print("Unknown operating system. Please install Node.js manually from https://nodejs.org/")
+                sys.exit(1)
+
+        def install_npm():
+            """
+            Installs npm if it is missing, depending on the OS.
+            """
+            if sys.platform.startswith("win"):
+                print("npm should have been installed with Node.js. Please check your Node.js installation.")
+                sys.exit(1)
+            elif sys.platform.startswith("darwin"):
+                print("Reinstalling npm for macOS...")
+                subprocess.run(["brew", "install", "npm"], check=True)
+            elif sys.platform.startswith("linux"):
+                print("Reinstalling npm for Linux...")
+                distro = subprocess.run(["lsb_release", "-is"], stdout=subprocess.PIPE).stdout.decode().strip().lower()
+                if distro in ["ubuntu", "debian"]:
+                    subprocess.run(["sudo", "apt", "install", "-y", "npm"], check=True)
+                elif distro in ["centos", "fedora", "redhat"]:
+                    subprocess.run(["sudo", "dnf", "install", "-y", "npm"], check=True)
+                elif distro == "arch":
+                    subprocess.run(["sudo", "pacman", "-S", "--noconfirm", "npm"], check=True)
+                else:
+                    print("Unknown Linux distribution. Please install npm manually from https://www.npmjs.com/")
+                    sys.exit(1)
+            else:
+                print("Unknown operating system. Please install npm manually from https://www.npmjs.com/")
+                sys.exit(1)
+
+        # Check for Node.js
+        if not is_tool_installed("node"):
+            print("Node.js not found! Installing Node.js...")
+            install_nodejs()
+
+        # Check for npm
+        if not is_tool_installed("npm"):
+            print("npm not found! Installing npm...")
+            install_npm()
+
+        # Check for Newman
+        if not is_tool_installed("newman"):
+            print("Newman not found! Installing Newman...")
+            try:
+                subprocess.run(["npm", "install", "-g", "newman"], check=True)
+                print("Newman successfully installed!")
+            except subprocess.CalledProcessError as e:
+                print(f"Error installing Newman: {e}")
+                sys.exit("Failed to install Newman.")
+        else:
+            print("Newman is already installed.")
+
+    @staticmethod
+    def performance_testing_with_postman_collections(collection_path=os.path.join(".", "PerformanceTestsData", "postman_collection.json"),
+                            environment_path=os.path.join(".", "PerformanceTestsData", "postman_environment.json"),
+                            log_file_path=os.path.join(".", "PerformanceTestsLogs", "performance_test.log"),
+                            result_file_path=os.path.join(".", "PerformanceTestsResult",
+                                                          "performance_testing_result.txt"),
+                            requests_per_second=2, total_requests=10, mode="AABB", max_task=2):
+        output_dir = os.path.join(".", "PerformanceRequests")
+
+        # The performance_testing_with_postman_collections method performs load testing of APIs using Newman
+        # for Postman collections.It automatically simulates API requests, measures performance,
+        # logs request successes and failures, and generates statistics.
+        # It supports two request execution modes (AABB and ABAB) and saves results in reports for analysis.
+
+        def setup_output_directory():
+            if os.path.exists(output_dir):
+                shutil.rmtree(output_dir)
+            os.makedirs(output_dir)
+
+        async def run_newman(request_name, request_index):
+            """Asynchronous call to Newman with logging."""
+            request_output_path = os.path.join(output_dir, f"newman_output_{request_name}_{request_index}.json")
+            command = [
+                "newman", "run", collection_path,
+                "-e", environment_path,
+                "--reporters", "json",
+                "--reporter-json-export", request_output_path
+            ]
+            async with semaphore:
+                start_time = datetime.now()
+                if statistics[request_name]["start_time"] is None:
+                    statistics[request_name]["start_time"] = start_time
+
+                print(f"Executing command: {' '.join(command)} for request '{request_name}'")
+                try:
+                    process = await asyncio.create_subprocess_exec(
+                        *command,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    stdout, stderr = await process.communicate()
+                    end_time = datetime.now()
+                    duration = (end_time - start_time).total_seconds()
+
+                    statistics[request_name]["end_time"] = end_time
+                    statistics[request_name]["individual_times"].append(duration)
+
+                    success = process.returncode == 0
+                    statistics[request_name]["success" if success else "failure"] += 1
+
+                    # Generate result file name
+                    status = "Success" if success else "Fail"
+                    timestamp = start_time.strftime("%Y-%m-%d_%H-%M-%S")
+                    filename = f"{request_name}-{request_index}_{status}_{timestamp}.txt"
+                    file_path = os.path.join(output_dir, filename)
+
+                    # Extract request and response data after the current request is executed
+                    try:
+                        with open(request_output_path, "r") as json_file:
+                            data = json.load(json_file)
+                            executions = data.get("run", {}).get("executions", [])
+                            if executions:
+                                request_data = json.dumps(executions[0].get("request", {}), indent=4)
+                                response_data = json.dumps(executions[0].get("response", {}), indent=4)
+                            else:
+                                request_data = "Request data is missing"
+                                response_data = "Response data is missing"
+                    except (FileNotFoundError, json.JSONDecodeError):
+                        request_data = "Result file is missing or corrupted"
+                        response_data = "Result file is missing or corrupted"
+
+                    # Save data to a file
+                    with open(file_path, "w") as file:
+                        file.write("Request:\n")
+                        file.write(request_data + "\n\n")
+                        file.write("Response:\n")
+                        file.write(response_data + "\n")
+
+                    if not success:
+                        print(f"[ERROR] Newman failed for request '{request_name}'. Return code: {process.returncode}")
+                        with open(log_file_path, "a") as log_file:
+                            log_file.write(stderr.decode() + "\n")
+                except Exception as e:
+                    statistics[request_name]["failure"] += 1
+                    print(f"[CRITICAL ERROR] Error executing request '{request_name}': {e}")
+                finally:
+                    # Remove temporary result file
+                    if os.path.exists(request_output_path):
+                        os.remove(request_output_path)
+
+        async def main():
+            """Main method to manage the load."""
+            if requests_per_second <= 0:
+                print("[CRITICAL ERROR] The value of requests_per_second must be greater than 0.")
+                return
+
+            interval = 1 / requests_per_second
+            start_time = datetime.now()
+
+            total_request_types = len(request_names)
+            if total_request_types == 0:
+                print("[CRITICAL ERROR] The collection does not contain any requests.")
+                return
+
+            requests_per_type = total_requests
+
+            if mode == "AABB":
+                # Execute all requests of one type, then another
+                for request_name in request_names:
+                    remaining_requests = requests_per_type
+                    request_index = 1
+                    while remaining_requests > 0:
+                        current_batch_size = min(max_task, remaining_requests)
+                        tasks = [run_newman(request_name, request_index + i) for i in range(current_batch_size)]
+                        await asyncio.gather(*tasks)
+                        request_index += current_batch_size
+                        remaining_requests -= current_batch_size
+                        await asyncio.sleep(interval)
+
+            elif mode == "ABAB":
+                # Alternate requests of different types
+                remaining_requests = {name: requests_per_type for name in request_names}
+                request_indices = {name: 1 for name in request_names}
+                while any(count > 0 for count in remaining_requests.values()):
+                    for request_name in request_names:
+                        if remaining_requests[request_name] > 0:
+                            current_batch_size = min(max_task, remaining_requests[request_name])
+                            tasks = [run_newman(request_name, request_indices[request_name] + i) for i in
+                                     range(current_batch_size)]
+                            await asyncio.gather(*tasks)
+                            request_indices[request_name] += current_batch_size
+                            remaining_requests[request_name] -= current_batch_size
+                            await asyncio.sleep(interval)
+
+            end_time = datetime.now()
+            total_time = (end_time - start_time).total_seconds()
+
+            # Final results
+            results = generate_results(total_time, total_requests * total_request_types)
+            print("".join(results))
+            with open(result_file_path, "w") as file:
+                file.writelines(results)
+
+        def generate_results(total_time, total_requests):
+            """Generate the final report."""
+            results = [f"Total real execution time for all requests: {total_time:.2f} seconds\n"]
+            results.append(f"Total requests: {total_requests}\n")
+            for request_name, stats in statistics.items():
+                avg_time = (sum(stats["individual_times"]) / len(stats["individual_times"])) if stats[
+                    "individual_times"] else 0
+                min_time = min(stats["individual_times"], default=0)
+                max_time = max(stats["individual_times"], default=0)
+
+                results.append(f"Request '{request_name}':\n")
+                results.append(f"  Successful: {stats['success']}, Failures: {stats['failure']}\n")
+                results.append(f"  Average execution time: {avg_time:.2f} sec\n")
+                results.append(f"  Minimum execution time: {min_time:.2f} sec\n")
+                results.append(f"  Maximum execution time: {max_time:.2f} sec\n")
+            return results
+
+        # Configuration
+        setup_output_directory()
+        MAX_CONCURRENT_TASKS = max(max_task, requests_per_second)
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
+        statistics = defaultdict(
+            lambda: {"success": 0, "failure": 0, "individual_times": [], "start_time": None, "end_time": None})
+
+        try:
+            with open(collection_path, "r") as file:
+                collection_data = json.load(file)
+                request_names = [item["name"] for item in collection_data.get("item", [])]
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            print(f"[CRITICAL ERROR] Error loading collection: {e}")
+            return
+
+        asyncio.run(main())
+
 
 
 
