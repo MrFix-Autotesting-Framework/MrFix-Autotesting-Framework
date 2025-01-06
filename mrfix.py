@@ -1,3 +1,6 @@
+import re
+from urllib.parse import urlparse
+from pathlib import Path
 import sys
 import shutil
 from collections import defaultdict
@@ -1193,6 +1196,49 @@ class MrFixUI:
             # Handle errors
             print(f"Error while scrolling to the element: {e}")
 
+    @staticmethod
+    def intercept_failed_requests_after_click(driver, element_xpath, wait_time=10):
+        """
+        Clicks a element on a web page and intercepts requests with errors (4xx, 5xx) for a specified duration.
+
+        :param element_xpath: XPath selector for the element to click.
+        :param wait_time: Time in seconds to intercept requests.
+        :param driver: It is a variable of the Selenium Webdriver type.
+        :return: Tuple (driver, message: str, errors: list)
+        """
+        try:
+            # Wait for the button to be clickable and click it
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, element_xpath))).click()
+
+            # Start intercepting requests
+            print(f"Intercepting requests with errors for {wait_time} seconds...")
+            start_time = time.time()
+
+            error_requests = []
+
+            while time.time() - start_time < wait_time:
+                # Intercept requests and filter by response status
+                for request in driver.requests:
+                    if request.response and 400 <= request.response.status_code < 600:
+                        error_requests.append({
+                            "url": request.url,
+                            "method": request.method,
+                            "status_code": request.response.status_code,
+                            "response_headers": dict(request.response.headers),
+                            "response_body": request.response.body.decode("utf-8", errors="ignore"),
+                        })
+
+            # Check for errors and return appropriate message
+            if error_requests:
+                message = "Errors detected!"
+                return driver, message, error_requests
+            else:
+                message = "No errors in Network and Console."
+                return driver, message, []
+
+        except Exception as e:
+            return driver, f"An error occurred: {str(e)}", []
+
 
 class MrFixSQL:
 
@@ -1951,6 +1997,126 @@ class MrLoggerHelper:
 
 class MrPerformance:
     @staticmethod
+    def convert_curl_to_postman(input_folder=os.path.join(".", "PerformanceTestsData"),
+                                output_folder=os.path.join(".", "PerformanceTestsData"),
+                                input_filename='curl.txt'):
+
+        import os
+        import json
+        from urllib.parse import urlparse
+
+        # Reading the original curl.txt file
+        input_path_curl = os.path.join(input_folder, input_filename)
+        if not os.path.exists(input_path_curl):
+            raise FileNotFoundError(f"Input file not found: {input_path_curl}")
+
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        with open(input_path_curl, 'r') as file:
+            curl_data = file.read()
+
+        requests = []
+        variables = {}
+
+        curl_blocks = [block.strip() for block in curl_data.strip().split('curl') if block.strip()]
+
+        for block in curl_blocks:
+            lines = block.strip().split('\\')
+            method = 'GET'
+            url = ''
+            headers = {}
+            body = None
+
+            for line in lines:
+                line = line.strip()
+                if line.startswith('-X'):
+                    method = line.split(' ', 1)[1].strip()
+                elif line.startswith('-H'):
+                    header = line[3:].strip().split(':', 1)
+                    headers[header[0].strip()] = header[1].strip()
+                elif line.startswith('-d'):
+                    raw_body = line[3:].strip()
+                    try:
+                        body = json.loads(raw_body)
+                    except json.JSONDecodeError:
+                        body = raw_body.strip("'")
+                else:
+                    if not url:
+                        url = line.strip()
+
+            # Parse and replace variables in URL
+            parsed_url = urlparse(url)
+            url_var_name = "base_url"
+            variables[url_var_name] = parsed_url.netloc
+            url_with_variable = url.replace(parsed_url.netloc, f"{{{{{url_var_name}}}}}")
+
+            # Replace headers values with variables
+            cleaned_headers = {}
+            for key, value in headers.items():
+                clean_key = key.strip("'").strip()  # Удаляем апострофы из ключей
+                header_var_name = clean_key.lower().replace('-', '_')
+                clean_value = value.strip("'").strip()  # Удаляем апострофы из значений
+                variables[header_var_name] = clean_value
+                cleaned_headers[clean_key] = f"{{{{{header_var_name}}}}}"
+            headers = cleaned_headers
+
+            # Replace body values with variables if it's a JSON object
+            if body and isinstance(body, dict):
+                for key, value in body.items():
+                    body_var_name = key.lower()
+                    variables[body_var_name] = value
+                    body[key] = f"{{{{{body_var_name}}}}}"
+
+            # Add request in JSON format
+            requests.append({
+                "name": parsed_url.path.split('/')[-1] or "Request",
+                "request": {
+                    "method": method,
+                    "header": [
+                        {"key": k, "value": v} for k, v in headers.items()
+                    ],
+                    "body": {
+                        "mode": "raw",
+                        "raw": json.dumps(body, ensure_ascii=False, indent=2) if isinstance(body, dict) else body
+                    },
+                    "url": {
+                        "raw": url_with_variable,
+                        "protocol": parsed_url.scheme,
+                        "host": [f"{{{{{url_var_name}}}}}"],
+                        "path": parsed_url.path.strip('/').split('/')
+                    }
+                }
+            })
+
+        # Saving a collection of queries
+        postman_collection_file = os.path.join(output_folder, "postman_collection.json")
+        postman_collection = {
+            "info": {
+                "name": "Converted Collection",
+                "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+            },
+            "item": requests
+        }
+
+        with open(postman_collection_file, 'w') as file:
+            json.dump(postman_collection, file, indent=2)
+
+        # Saving variables
+        postman_environment_file = os.path.join(output_folder, "postman_environment.json")
+        postman_environment = {
+            "id": "environment_id",
+            "name": "Converted Environment",
+            "values": [
+                {"key": key, "value": value, "enabled": True} for key, value in variables.items()
+            ]
+        }
+
+        with open(postman_environment_file, 'w') as file:
+            json.dump(postman_environment, file, indent=2)
+
+
+    @staticmethod
     def install_newman():
         """
         Universal method for installing Node.js, npm, and Newman on any OS (Windows, Linux, macOS).
@@ -2046,16 +2212,23 @@ class MrPerformance:
             print("Newman is already installed.")
 
     @staticmethod
-    def performance_testing_with_postman_collections(collection_path=os.path.join(".", "PerformanceTestsData", "postman_collection.json"),
-                            environment_path=os.path.join(".", "PerformanceTestsData", "postman_environment.json"),
-                            log_file_path=os.path.join(".", "PerformanceTestsLogs", "performance_test.log"),
-                            result_file_path=os.path.join(".", "PerformanceTestsResult",
-                                                          "performance_testing_result.txt"),
-                            requests_per_second=2, total_requests=10, mode="AABB", max_task=2):
+    def performance_testing_with_postman_collections(
+            collection_path=os.path.join(".", "PerformanceTestsData", "postman_collection.json"),
+            environment_path=os.path.join(".", "PerformanceTestsData", "postman_environment.json"),
+            log_file_path=os.path.join(".", "PerformanceTestsLogs", "performance_test.log"),
+            result_file_path=os.path.join(".", "PerformanceTestsResult",
+                                          "performance_testing_result.txt"),
+            requests_per_second=2, total_requests=10, mode="AABB", max_task=2):
         output_dir = os.path.join(".", "PerformanceRequests")
 
+        # Check if the result file exists, and create it if not
+        if not os.path.exists(result_file_path):
+            os.makedirs(os.path.dirname(result_file_path), exist_ok=True)
+            with open(result_file_path, "w") as file:
+                file.write("Performance Testing Results\n")
+
         # The performance_testing_with_postman_collections method performs load testing of APIs using Newman
-        # for Postman collections.It automatically simulates API requests, measures performance,
+        # for Postman collections. It automatically simulates API requests, measures performance,
         # logs request successes and failures, and generates statistics.
         # It supports two request execution modes (AABB and ABAB) and saves results in reports for analysis.
 
@@ -2221,6 +2394,10 @@ class MrPerformance:
             return
 
         asyncio.run(main())
+
+
+
+
 
 
 
