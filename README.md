@@ -31,6 +31,21 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in Version 8.0.4 ?
+    - Corrected the method "convert_curl_to_postman"
+
+What's new in Version 8.0.3 ?
+    - Added the method "intercept_failed_requests_after_click". This method clicks a element on a web page and intercepts requests with errors (4xx, 5xx) for a specified duration.
+    - Corrected the method "performance_testing_with_postman_collections"
+
+What's new in Version 8.0.2 ?
+    - New method added: a new method, "convert_curl_to_postman", has been introduced in the MrPerformance class.
+    - Functionality of "convert_curl_to_postman":
+        This method converts a curl.txt file containing API requests in the curl format into two separate files:
+            1) postman_collections.json
+            2) postman_environments.json
+    Ensure that the curl.txt file contains valid API requests written in the curl format.
+
 What's new in version 8.0.1 ?
     - Added class MrPerformance.
     - Added two methods to the MrPerformance class: "install_newman" and "performance_testing_with_postman_collections".
