@@ -9,8 +9,7 @@ Allows a beginner (and not just a beginner) specialist in quality control automa
 
 
 All versions of the mrfix module are safe to install in a corporate environment. Here's what it says, for example, about the previous version:
-"The latest version of mrfix with no known security vulnerabilities is 6.0.5. We recommend installing version 6.0.5.
-The information on this page was curated by experts in our Cybersecurity Intelligence Team."            
+"The latest version of mrfix with no known security vulnerabilities is 8.0.1. We recommend installing version 8.0.1."            
 
                                                     Safety CLI Cybersecurity Inc
                                                     https://data.safetycli.com/packages/pypi/mrfix/
@@ -30,6 +29,9 @@ https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in Version 8.0.5 ?
+    - Added the method "check_Console_and_Network_errors" (class MrFixUI) for Google Chrome browser. This method must used with method "get_driver" (class MrBrowserManager)
 
 What's new in Version 8.0.4 ?
     - Corrected the method "convert_curl_to_postman"
