@@ -12,6 +12,7 @@ from selenium.common.exceptions import NoSuchWindowException
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.alert import Alert
 from selenium.common.exceptions import NoAlertPresentException
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver import ActionChains
@@ -1239,6 +1240,44 @@ class MrFixUI:
         except Exception as e:
             return driver, f"An error occurred: {str(e)}", []
 
+    @staticmethod
+    def check_Console_and_Network_errors(browser, url):
+        try:
+            # Enabling network log interception (Chrome DevTools Protocol)
+            browser.execute_cdp_cmd("Network.enable", {})
+
+            # Opening the page
+            browser.get(url)
+
+            # We get errors from the browser console
+            logs = browser.get_log("browser")
+            console_errors = [entry["message"] for entry in logs if "SEVERE" in entry["level"]]
+
+            # We get network errors (HTTP 4xx и 5xx)
+            network_errors = []
+            performance_logs = browser.get_log("performance")  # Taking away all network events
+
+            for entry in performance_logs:
+                log_message = json.loads(entry["message"])["message"]
+
+                if log_message["method"] == "Network.responseReceived":  # Filtering the necessary events
+                    response = log_message["params"]["response"]
+                    status = response["status"]
+                    url = response["url"]
+
+                    if 400 <= status < 600:  # Filtering all 4xx and 5xx errors
+                        network_errors.append(f"URL: {url} | Status: {status}")
+
+            # If there are no errors, we return True
+            if not console_errors and not network_errors:
+                return True
+
+            # Returning a list of errors
+            return {"console_errors": console_errors, "network_errors": network_errors}
+
+        except Exception as e:
+            return {"error": str(e)}
+
 
 class MrFixSQL:
 
@@ -1903,6 +1942,11 @@ class MrBrowserManager:
         # Initialize the driver based on the selected browser
         if self.config_browser == 'chrome':
             options = webdriver.ChromeOptions()
+            options.set_capability("goog:loggingPrefs", {
+                "browser": "ALL",
+                "performance": "ALL"  # Enabling network log interception
+            })
+            service = Service()
             downloads_path = os.path.join(str(pathlib.Path.cwd()), 'downloads')
 
             # Set preferences for Chrome, such as download directory and security settings
@@ -1927,7 +1971,7 @@ class MrBrowserManager:
                 options.binary_location = '/opt/google/chrome'
 
             # Create Chrome driver with specified options
-            self.driver = webdriver.Chrome(options=options)
+            self.driver = webdriver.Chrome(service=service, options=options)
 
         elif self.config_browser == 'firefox':
             options = webdriver.FirefoxOptions()
