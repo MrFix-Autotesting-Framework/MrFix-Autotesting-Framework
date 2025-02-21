@@ -1,5 +1,7 @@
 Module MrFix
 
+MrFix it's fast, simple, effective!
+
 General information 
 
 The Mr Fix module is designed to create autotests written in Python for testing UI, API, PostgreSQL, Security and Perfomance Testing.
@@ -29,6 +31,9 @@ https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in Version 8.0.6 ?
+    - Changed the "open_url_in_new_tab" method (MrFixUI class) to work correctly.
 
 What's new in Version 8.0.5 ?
     - Added the method "check_Console_and_Network_errors" (class MrFixUI) for Google Chrome browser. This method must used with method "get_driver" (class MrBrowserManager)
