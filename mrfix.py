@@ -482,10 +482,16 @@ class MrFixUI:
 
     @staticmethod
     def open_url_in_new_tab(driver, open_url):
-        # - opens url = open_url in a new browser tab and return True of success or text of error
+        """
+        Opens the given URL in a new browser tab.
+
+        :param driver: WebDriver instance
+        :param open_url: URL to be opened in the new tab
+        :return: True if successful, otherwise an error message
+        """
         try:
             # Open a new tab
-            driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + 't')
+            driver.execute_script("window.open('');")
 
             # Switch to the new tab
             driver.switch_to.window(driver.window_handles[-1])
@@ -493,12 +499,10 @@ class MrFixUI:
             # Open the URL in the new tab
             driver.get(open_url)
 
-            # Return True if the URL was opened successfully
-            return True
+            return True  # Return True if successful
 
         except WebDriverException as e:
-            # Handle any exceptions that occur and return the error message
-            return str(e)
+            return str(e)  # Return the error message in case of failure
 
     @staticmethod
     def check_element_is_displayed(driver, element_xpath):
