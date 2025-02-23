@@ -11,7 +11,7 @@ Allows a beginner (and not just a beginner) specialist in quality control automa
 
 
 All versions of the mrfix module are safe to install in a corporate environment. Here's what it says, for example, about the previous version:
-"The latest version of mrfix with no known security vulnerabilities is 8.0.1. We recommend installing version 8.0.1."            
+"The latest version of mrfix with no known security vulnerabilities is 8.0.6. We recommend installing version 8.0.6."            
 
                                                     Safety CLI Cybersecurity Inc
                                                     https://data.safetycli.com/packages/pypi/mrfix/
@@ -31,6 +31,12 @@ https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in Version 8.0.7 ?
+    - Added the "execute_js_script" method (MrFixUI class) - We run the JS script named script_name on a page in browser.
+    - Added the "accept_js_dialog" method (MrFixUI class) - Clicks 'OK' in a JS pop-up window.
+    - Added the "dismiss_js_dialog" method (MrFixUI class) - Clicks 'Cancel' in the JS popup.
+    - Added the "enter_text_in_js_dialog" method (MrFixUI class) - Enters text into the JS pop-up window (prompt) and clicks 'OK'.
 
 What's new in Version 8.0.6 ?
     - Changed the "open_url_in_new_tab" method (MrFixUI class) to work correctly.
