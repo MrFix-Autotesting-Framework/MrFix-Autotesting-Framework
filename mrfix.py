@@ -1,6 +1,3 @@
-import re
-from urllib.parse import urlparse
-from pathlib import Path
 import sys
 import shutil
 from collections import defaultdict
@@ -23,6 +20,7 @@ import pyperclip
 import json
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import JavascriptException
 from datetime import datetime
 from bs4 import BeautifulSoup
 import subprocess
@@ -35,7 +33,6 @@ import socket
 from cryptography.fernet import Fernet
 import os
 import requests
-import concurrent.futures
 import asyncio
 import httpx
 import pytest
@@ -1281,6 +1278,46 @@ class MrFixUI:
 
         except Exception as e:
             return {"error": str(e)}
+
+    @staticmethod
+    def execute_js_script(browser: webdriver, script_name):
+        # We run the JS script named script_name
+        try:
+            browser.execute_script(script_name)
+            return True
+        except (JavascriptException, WebDriverException) as e:
+            return f"JavaScript execution error: {e}"
+
+    @staticmethod
+    def accept_js_dialog(browser):
+        # Clicks 'OK' in a JS pop-up window.
+        try:
+            alert = Alert(browser)
+            alert.accept()
+            return True
+        except NoAlertPresentException:
+            return "No JavaScript alert present to accept."
+
+    @staticmethod
+    def dismiss_js_dialog(browser):
+        # Clicks 'Cancel' in the JS popup.
+        try:
+            alert = Alert(browser)
+            alert.dismiss()
+            return True
+        except NoAlertPresentException:
+            return "No JavaScript alert present to dismiss."
+
+    @staticmethod
+    def enter_text_in_js_dialog(browser, text):
+        # Enters text into the JS pop-up window (prompt) and clicks 'OK'.
+        try:
+            alert = Alert(browser)
+            alert.send_keys(text)
+            alert.accept()
+            return True
+        except NoAlertPresentException:
+            return "No JavaScript prompt present to enter text."
 
 
 class MrFixSQL:
