@@ -1969,7 +1969,7 @@ class MrFixLoad:
 
 
 class MrBrowserManager:
-    def __init__(self, config_browser='chrome', width="1920", high="1080", wait_time=20, headless=False):
+    def __init__(self, config_browser='chrome', width="1920", high="1080", wait_time=30, headless=False):
         self.config_browser = config_browser
         self.width = width
         self.high = high
@@ -1977,7 +1977,7 @@ class MrBrowserManager:
         self.wait_time = wait_time
         self.driver = None
 
-    def get_driver(self, width, high, headless):
+    def get_driver(self, width, high, headless = False, incognito = False, implicitly_wait_time = 30):
         directory = os.path.abspath(os.curdir)
 
         # Initialize the driver based on the selected browser
@@ -2001,11 +2001,12 @@ class MrBrowserManager:
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-gpu")
             options.add_argument("--disable-extensions")
+            if os.name != 'nt': options.add_argument("--disable-dev-shm-usage")
+            # Enable incognito mode if specified
+            if incognito: options.add_argument("--incognito")
             options.add_argument(f"--window-size={width},{high}")
-
             # Enable headless mode if specified
-            if headless:
-                options.add_argument('--headless')
+            if headless: options.add_argument('--headless')
 
             # Set path to Chrome binary if the OS is not Windows
             if os.name != 'nt':
@@ -2024,6 +2025,10 @@ class MrBrowserManager:
             options.set_preference("browser.download.dir", directory)
             options.set_preference("browser.download.folderList", 2)  # Use custom download directory
             options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream")
+            # Enable incognito mode if specified
+            if incognito: options.add_argument("--private")
+            # Enable headless mode if specified
+            if headless: options.add_argument('--headless')
             options.add_argument(f'--width={width}')
             options.add_argument(f'--height={high}')
 
@@ -2038,7 +2043,10 @@ class MrBrowserManager:
             raise Exception(f'"{self.config_browser}" is not a supported browser')
 
         # Set an implicit wait for the driver
-        self.driver.implicitly_wait(self.wait_time)
+        if implicitly_wait_time:
+            self.driver.implicitly_wait(implicitly_wait_time)
+        else:
+            self.driver.implicitly_wait(self.wait_time)
         return self.driver
 
     def quit_driver(self):
