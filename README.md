@@ -32,7 +32,10 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
-What's new in Version 8.0.7 ?
+What's new in Version 8.0.8 ?
+- The "get_driver" method (MrBrowserManager class) has been changed. This method now has optional arguments "incognito" for the browser to work in incognito mode and "implicitly_wait_time" for setting the implicit wait time.
+
+- What's new in Version 8.0.7 ?
     - Added the "execute_js_script" method (MrFixUI class) - We run the JS script named script_name on a page in browser.
     - Added the "accept_js_dialog" method (MrFixUI class) - Clicks 'OK' in a JS pop-up window.
     - Added the "dismiss_js_dialog" method (MrFixUI class) - Clicks 'Cancel' in the JS popup.
