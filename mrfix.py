@@ -1186,7 +1186,7 @@ class MrFixUI:
             if not cookies:
                 return "❌ Error: the cookie list is empty!"
 
-            # Set cookies one by one
+            # Set cookies one by one in the browser
             for cookie in cookies:
                 if not isinstance(cookie, dict) or "name" not in cookie or "value" not in cookie:
                     print(f"⚠ Skipping invalid cookie: {cookie}")
