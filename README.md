@@ -6,15 +6,21 @@ General information
 
 The Mr Fix module is designed to create autotests written in Python for testing UI, API, PostgreSQL, Security and Perfomance Testing.
 Mr Fix is a module with a set of decorators methods for writing autotests for frontend and backend. It contains all the basic methods needed to write UI-, API- and SQL-autotests. 
-It is an open source product. It is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects). Supports the principle of "all in one and in one place". 
+It is an open source product. It has an MIT license and is distributed on the terms of free software (i.e. it allows you to legally use it, including on commercial projects - MIT License). Supports the principle of "all in one and in one place". 
 Allows a beginner (and not just a beginner) specialist in quality control automation not to search for a solution through various manuals and websites, but to immediately find it and use proven methods of work in the MrFix module.
 
 
 All versions of the mrfix module are safe to install in a corporate environment. Here's what it says, for example, about the previous version:
-"The latest version of mrfix with no known security vulnerabilities is 8.0.6. We recommend installing version 8.0.6."            
+"The latest version of mrfix with no known security vulnerabilities is 8.0.8. We recommend installing version 8.0.8.
+The information on this page was curated by experts in our Cybersecurity Intelligence Team."            
 
                                                     Safety CLI Cybersecurity Inc
                                                     https://data.safetycli.com/packages/pypi/mrfix/
+
+Link of source code:
+
+https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
+
 
 The advantages of the module are also:
 
@@ -23,14 +29,15 @@ The advantages of the module are also:
     • a great concentration of the autotester on the correct implementation of the autotest logic, and not on the technical part of autotest;
     
     • the uniformity of the approach of all methods to the form of organization of input data, which simplifies the memorization and application of methods of module
-    
-Link of source code:
 
-https://github.com/MrFix-Autotesting-Framework/MrFix-Autotesting-Framework
 
 Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in Version 8.1.0 ?
+    - Changed the "get_driver" method (MrBrowserManager class) for more stable operation in various conditions.
+    - Added method "press_character_by_character" (class MrFixUI) for entering a string character by character.
 
 What's new in Version 8.0.8 ?
 - The "get_driver" method (MrBrowserManager class) has been changed. This method now has optional arguments "incognito" for the browser to work in incognito mode and "implicitly_wait_time" for setting the implicit wait time.
