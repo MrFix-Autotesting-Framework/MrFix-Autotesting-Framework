@@ -9,7 +9,6 @@ from selenium.common.exceptions import NoSuchWindowException
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.alert import Alert
 from selenium.common.exceptions import NoAlertPresentException
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver import ActionChains
@@ -37,6 +36,10 @@ import asyncio
 import httpx
 import pytest
 import pathlib
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 
 
 
@@ -456,6 +459,15 @@ class MrFixUI:
         action = ActionChains(driver)
         for _ in range(n):
             action.send_keys(Keys.SPACE)
+            time.sleep(.1)
+        action.perform()
+
+    @staticmethod
+    def press_character_by_character(driver, my_string: str):
+        # - prints the string = my_string character by character
+        action = ActionChains(driver)
+        for char in my_string:
+            action.send_keys(char)
             time.sleep(.1)
         action.perform()
 
@@ -1137,15 +1149,73 @@ class MrFixUI:
             return f"Error: {str(e)}"
 
     @staticmethod
-    def set_cookies(driver, cookies_dict):
-        # - this method installs cookies from cookies_dict
+    def set_cookies(driver, cookies_list):
+        """
+        Sets the cookie from cookies_dict to the browser.
+
+        :param driver: WebDriver (e.g. Chrome, Firefox)
+        :param cookies_dict: dict, where key is the cookie name, value is the cookie value
+        :return: True if the cookie was successfully added, otherwise a string with an error
+        """
         try:
-            # Set cookies
-            driver.add_cookie(cookies_dict)
+            for cookie in cookies_list:
+                driver.add_cookie(cookie)
             return True
         except Exception as e:
-            # If other errors occur, return an error message
             return f"Error: {str(e)}"
+
+    @staticmethod
+    def set_list_dict_cookies(driver, cookies):
+        """
+        Sets the given cookies in the Selenium browser.
+
+        :param driver: WebDriver (Chrome, Firefox, etc.)
+        :param cookies: list (a list of cookies in dictionary format) or str (path to a JSON file).
+        :return: True if the cookies were successfully set, otherwise a string with an error message.
+        """
+        try:
+            # If a file path is provided, load cookies from the file
+            if isinstance(cookies, str):
+                with open(cookies, "r") as file:
+                    cookies = json.load(file)
+
+            # Check that cookies is a list of dictionaries
+            if not isinstance(cookies, list):
+                return f"❌ Error: cookies must be a list or a JSON file, but received {type(cookies)}"
+
+            if not cookies:
+                return "❌ Error: the cookie list is empty!"
+
+            # Set cookies one by one
+            for cookie in cookies:
+                if not isinstance(cookie, dict) or "name" not in cookie or "value" not in cookie:
+                    print(f"⚠ Skipping invalid cookie: {cookie}")
+                    continue
+
+                # Filter only valid keys for Selenium
+                valid_cookie = {
+                    "name": cookie["name"],
+                    "value": cookie["value"],
+                    "path": cookie.get("path", "/")
+                }
+
+                # Add additional parameters if they exist
+                optional_keys = ["domain", "secure", "httpOnly", "expiry", "sameSite"]
+                for key in optional_keys:
+                    if key in cookie:
+                        valid_cookie[key] = cookie[key]
+
+                # Add the cookie to the browser
+                try:
+                    driver.add_cookie(valid_cookie)
+                    print(f"✅ Cookie {cookie['name']} has been set!")
+                except Exception as e:
+                    print(f"❌ Error while setting cookie {cookie['name']}: {e}")
+
+            return True
+
+        except Exception as e:
+            return f"❌ Error while processing cookies: {str(e)}"
 
     @staticmethod
     def delete_cookies(driver, cookies_key):
@@ -1153,6 +1223,17 @@ class MrFixUI:
         try:
             # Delete cookies
             driver.delete_cookie(cookies_key)
+            return True
+        except Exception as e:
+            # If other errors occur, return an error message
+            return f"Error: {str(e)}"
+
+    @staticmethod
+    def delete_all_cookies(driver):
+        # - this method deletes all cookies
+        try:
+            # Delete cookies
+            driver.delete_all_cookies()
             return True
         except Exception as e:
             # If other errors occur, return an error message
@@ -1977,76 +2058,131 @@ class MrBrowserManager:
         self.wait_time = wait_time
         self.driver = None
 
-    def get_driver(self, width, high, headless = False, incognito = False, implicitly_wait_time = 30):
-        directory = os.path.abspath(os.curdir)
+    def get_driver(self, width, high, headless=False, incognito=False, implicitly_wait_time=30):
+        """
+        Initializes and returns a Selenium WebDriver instance for Chrome or Firefox.
 
-        # Initialize the driver based on the selected browser
+        :param width: (int) Width of the browser window.
+        :param high: (int) Height of the browser window.
+        :param headless: (bool, default=False) If True, runs the browser in headless mode (no GUI).
+        :param incognito: (bool, default=False) If True, starts the browser in private/incognito mode.
+        :param implicitly_wait_time: (int, default=30) Time (in seconds) to wait for elements to be available.
+
+        :return: WebDriver instance for the specified browser.
+        """
+
+        # Define the download directory path for browser file downloads
+        downloads_path = os.path.join(os.getcwd(), "downloads")
+
         if self.config_browser == 'chrome':
             options = webdriver.ChromeOptions()
+
+            # Enable browser logging (for debugging purposes)
             options.set_capability("goog:loggingPrefs", {
                 "browser": "ALL",
-                "performance": "ALL"  # Enabling network log interception
+                "performance": "ALL"
             })
-            service = Service()
-            downloads_path = os.path.join(str(pathlib.Path.cwd()), 'downloads')
 
-            # Set preferences for Chrome, such as download directory and security settings
+            # Chrome download settings
             prefs = {
-                "download.default_directory": downloads_path,
-                "download.prompt_for_download": False,
-                "download.directory_upgrade": True,
-                "safebrowsing.enabled": True
+                "download.default_directory": downloads_path,  # Set default download directory
+                "download.prompt_for_download": False,  # Disable download confirmation prompt
+                "download.directory_upgrade": True,  # Enable download directory updates
+                "safebrowsing.enabled": True,  # Enable Safe Browsing
+                "credentials_enable_service": False,  # Disable password saving
+                "profile.password_manager_enabled": False,  # Disable password manager
+                "profile.default_content_setting_values.notifications": 2,  # Disable browser notifications
             }
             options.add_experimental_option("prefs", prefs)
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-gpu")
-            options.add_argument("--disable-extensions")
-            if os.name != 'nt': options.add_argument("--disable-dev-shm-usage")
-            # Enable incognito mode if specified
-            if incognito: options.add_argument("--incognito")
-            options.add_argument(f"--window-size={width},{high}")
-            # Enable headless mode if specified
-            if headless: options.add_argument('--headless')
 
-            # Set path to Chrome binary if the OS is not Windows
+            # Disable password-related features for security reasons
+            disable_features = [
+                "PasswordLeakDetection",
+                "PasswordManagerEnableAutosignin",
+                "PasswordManagerOnboarding",
+                "SafetyCheckWeakPasswords",
+                "SafeBrowsingPasswordReuseDetection",
+                "SafeBrowsingEnhancedProtectionMessage"
+            ]
+            options.add_argument(f"--disable-features={','.join(disable_features)}")
+
+            # Set up user profile directory based on OS
+            if os.name == "nt":
+                user_data_dir = "C:\\temp\\chrome_test_profile"
+            else:
+                user_data_dir = "/tmp/chrome_test_profile"
+
+            # Additional browser stability flags
+            options.add_argument("--no-sandbox")  # Avoid sandboxing issues
+            options.add_argument("--disable-gpu")  # Disable GPU acceleration
+            options.add_argument("--disable-extensions")  # Disable all browser extensions
+            options.add_argument("--disable-popup-blocking")  # Allow pop-ups
+            options.add_argument("--disable-infobars")  # Hide info bars
+            options.add_argument("--disable-notifications")  # Disable browser notifications
+            options.add_argument("--disable-save-password-bubble")  # Prevent password save pop-ups
+            options.add_argument(
+                "--disable-password-manager-reauthentication")  # Disable password re-authentication prompts
+            options.add_argument("--ignore-certificate-errors")  # Ignore SSL certificate errors
+            options.add_argument("--allow-insecure-localhost")  # Allow insecure connections on localhost
+            options.add_argument("--disable-web-security")  # Disable web security settings
+
+            # Additional settings for non-Windows systems
             if os.name != 'nt':
-                options.binary_location = '/opt/google/chrome'
+                options.add_argument("--disable-dev-shm-usage")
 
-            # Create Chrome driver with specified options
+            # Enable incognito mode if requested
+            if incognito:
+                options.add_argument("--incognito")
+
+            # Set browser window size
+            options.add_argument(f"--window-size={width},{high}")
+
+            # Enable headless mode if requested
+            if headless:
+                options.add_argument('--headless')
+
+            # Automatically install and use the correct ChromeDriver version
+            service = ChromeService(ChromeDriverManager().install())
+
+            # Initialize Chrome WebDriver
             self.driver = webdriver.Chrome(service=service, options=options)
 
         elif self.config_browser == 'firefox':
             options = webdriver.FirefoxOptions()
 
-            # Enable reading from clipboard in Firefox
+            # Automatically install and use the correct GeckoDriver version
+            service = FirefoxService(GeckoDriverManager().install())
+
+            # Enable clipboard access feature
             options.add_argument("--enable-features=ClipboardReadWrite")
 
-            # Set download preferences for Firefox
-            options.set_preference("browser.download.dir", directory)
+            # Firefox download settings
+            options.set_preference("browser.download.dir", downloads_path)  # Set default download directory
             options.set_preference("browser.download.folderList", 2)  # Use custom download directory
-            options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream")
-            # Enable incognito mode if specified
-            if incognito: options.add_argument("--private")
-            # Enable headless mode if specified
-            if headless: options.add_argument('--headless')
+            options.set_preference("browser.helperApps.neverAsk.saveToDisk",
+                                   "application/octet-stream")  # Disable download pop-ups
+
+            # Enable private browsing mode if requested
+            if incognito:
+                options.add_argument("--private")
+
+            # Enable headless mode if requested
+            if headless:
+                options.add_argument('--headless')
+
+            # Set browser window size
             options.add_argument(f'--width={width}')
             options.add_argument(f'--height={high}')
 
-            # Set path to Firefox binary if the OS is not Windows
-            if os.name != 'nt':
-                options.binary_location = '/usr/bin/firefox'
+            # Initialize Firefox WebDriver
+            self.driver = webdriver.Firefox(service=service, options=options)
 
-            # Create Firefox driver with specified options
-            self.driver = webdriver.Firefox(options=options)
         else:
-            # Raise an error if an unsupported browser is specified
             raise Exception(f'"{self.config_browser}" is not a supported browser')
 
-        # Set an implicit wait for the driver
-        if implicitly_wait_time:
-            self.driver.implicitly_wait(implicitly_wait_time)
-        else:
-            self.driver.implicitly_wait(self.wait_time)
+        # Set implicit wait time for elements to load
+        self.driver.implicitly_wait(implicitly_wait_time)
+
         return self.driver
 
     def quit_driver(self):
