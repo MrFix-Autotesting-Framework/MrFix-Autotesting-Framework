@@ -35,6 +35,9 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in Version 8.1.1 ?
+    - Added method "set_list_dict_cookies" (class MrFixUI). This method sets all possible cookies on a browser page from a JSON file (contains cookies as a list of dictionaries)
+
 What's new in Version 8.1.0 ?
     - Changed the "get_driver" method (MrBrowserManager class) for more stable operation in various conditions.
     - Added method "press_character_by_character" (class MrFixUI) for entering a string character by character.
