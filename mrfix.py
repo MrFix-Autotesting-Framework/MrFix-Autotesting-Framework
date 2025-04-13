@@ -2,6 +2,7 @@ import sys
 import shutil
 from collections import defaultdict
 import time
+from typing import Optional, Dict, Any, Tuple, Union
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import WebDriverException
@@ -1831,6 +1832,301 @@ class MrFixAPI:
 
 
 
+    @staticmethod
+    def send_get_full_request(
+            url: str,  # Required: Target endpoint URL
+            params: Optional[Dict[str, Any]] = None,  # Optional: Query parameters (?key=value)
+            headers: Optional[Dict[str, str]] = None,  # Optional: HTTP headers (e.g. Authorization, Content-Type)
+            cookies: Optional[Dict[str, str]] = None,  # Optional: Cookies to send with the request
+            auth: Optional[Tuple[str, str]] = None,  # Optional: Basic Auth as (username, password)
+            timeout: Union[int, Tuple[int, int]] = 10,  # Optional: Timeout in seconds or (connect, read)
+            allow_redirects: bool = True,  # Optional: Follow HTTP redirects (3xx), default is True
+            proxies: Optional[Dict[str, str]] = None,  # Optional: Proxy servers (e.g. {"http": "http://proxy"})
+            stream: bool = False,  # Optional: If True, response content is streamed
+            verify: Union[bool, str] = True  # Optional: Verify SSL certificates (or provide path to CA bundle)
+    ) -> requests.Response:
+        """
+        Sends an HTTP GET request. Always returns a requests.Response object.
+        On error, returns a synthetic Response with appropriate status_code and message in .text
+        """
+        try:
+            response = requests.get(
+                url=url,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                timeout=timeout,
+                allow_redirects=allow_redirects,
+                proxies=proxies,
+                stream=stream,
+                verify=verify
+            )
+            return response
+
+        except requests.exceptions.RequestException as e:
+
+            # 🔹 Handle network-level or unexpected errors (no response returned by server)
+            response = requests.Response()
+            response.url = url
+            response._content = str(e).encode("utf-8")
+            response.encoding = "utf-8"
+            response.request = requests.Request("GET", url).prepare()
+            response.reason = type(e).__name__
+            response.headers["X-Error-Type"] = type(e).__name__
+
+            # Assign appropriate synthetic status code
+            if isinstance(e, requests.exceptions.Timeout):
+                response.status_code = 408  # Request Timeout
+            elif isinstance(e, requests.exceptions.ConnectionError):
+                response.status_code = 0  # Custom: no connection
+            elif isinstance(e, requests.exceptions.TooManyRedirects):
+                response.status_code = 310  # Custom: too many redirects
+            else:
+                response.status_code = 520  # Unknown Error (Cloudflare style)
+
+            return response
+
+    @staticmethod
+    def send_post_full_request(
+            url: str,  # Required: Target endpoint URL
+            data: Optional[Union[Dict[str, Any], str]] = None,  # Optional: Form data (or string for raw body)
+            json: Optional[Dict[str, Any]] = None,  # Optional: JSON payload (overrides `data` if present)
+            params: Optional[Dict[str, Any]] = None,  # Optional: URL query parameters (?key=value)
+            headers: Optional[Dict[str, str]] = None,  # Optional: HTTP headers
+            cookies: Optional[Dict[str, str]] = None,  # Optional: Cookies to include in the request
+            files: Optional[Dict[str, Any]] = None,  # Optional: Files for multipart/form-data upload
+            auth: Optional[Tuple[str, str]] = None,  # Optional: Basic Authentication
+            timeout: Union[int, Tuple[int, int]] = 10,  # Optional: Timeout in seconds or (connect, read)
+            allow_redirects: bool = True,  # Optional: Follow HTTP redirects (default True)
+            proxies: Optional[Dict[str, str]] = None,  # Optional: Proxy configuration
+            stream: bool = False,  # Optional: Stream response content (useful for large files)
+            verify: Union[bool, str] = True  # Optional: SSL certificate verification or CA path
+    ) -> requests.Response:
+        """
+        Sends an HTTP POST request. Always returns a requests.Response object.
+        - If the server returns an error response (4xx, 5xx), it is returned as-is.
+        - If the request fails entirely (e.g. timeout, no network), a synthetic response is returned with status info.
+        """
+        try:
+            response = requests.post(
+                url=url,
+                data=data,
+                json=json,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                files=files,
+                auth=auth,
+                timeout=timeout,
+                allow_redirects=allow_redirects,
+                proxies=proxies,
+                stream=stream,
+                verify=verify
+            )
+            return response  # ✅ Real response from server (success or HTTP error)
+
+        except requests.exceptions.RequestException as e:
+            # 🔹 Handle errors where no valid response was received from the server
+            response = requests.Response()
+            response.url = url
+            response._content = str(e).encode("utf-8")
+            response.encoding = "utf-8"
+            response.request = requests.Request("POST", url).prepare()
+            response.reason = type(e).__name__
+            response.headers["X-Error-Type"] = type(e).__name__
+
+            # Assign appropriate synthetic status code
+            if isinstance(e, requests.exceptions.Timeout):
+                response.status_code = 408  # Request Timeout
+            elif isinstance(e, requests.exceptions.ConnectionError):
+                response.status_code = 0  # Custom code for no network
+            elif isinstance(e, requests.exceptions.TooManyRedirects):
+                response.status_code = 310  # Custom code for too many redirects
+            else:
+                response.status_code = 520  # Unknown Error (Cloudflare-style)
+
+            return response
+
+    @staticmethod
+    def send_patch_full_request(
+        url: str,                                       # Required: Target endpoint URL
+        data: Optional[Union[Dict[str, Any], str]] = None,   # Optional: Form data or raw string body
+        json: Optional[Dict[str, Any]] = None,          # Optional: JSON payload (overrides `data` if present)
+        params: Optional[Dict[str, Any]] = None,        # Optional: Query parameters (?key=value)
+        headers: Optional[Dict[str, str]] = None,       # Optional: HTTP headers
+        cookies: Optional[Dict[str, str]] = None,       # Optional: Cookies to include in the request
+        files: Optional[Dict[str, Any]] = None,         # Optional: Files for multipart/form-data (rare for PATCH)
+        auth: Optional[Tuple[str, str]] = None,         # Optional: Basic Authentication
+        timeout: Union[int, Tuple[int, int]] = 10,      # Optional: Timeout in seconds or (connect, read)
+        allow_redirects: bool = True,                   # Optional: Follow redirects
+        proxies: Optional[Dict[str, str]] = None,       # Optional: Proxy configuration
+        stream: bool = False,                           # Optional: Stream response content
+        verify: Union[bool, str] = True                 # Optional: SSL certificate verification or CA path
+    ) -> requests.Response:
+        """
+        Sends an HTTP PATCH request. Always returns a requests.Response object.
+        - If the server returns an HTTP error response (e.g. 4xx, 5xx), it's returned as-is.
+        - If the request fails entirely (e.g. connection error, timeout), a synthetic response is returned.
+        """
+        try:
+            response = requests.patch(
+                url=url,
+                data=data,
+                json=json,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                files=files,
+                auth=auth,
+                timeout=timeout,
+                allow_redirects=allow_redirects,
+                proxies=proxies,
+                stream=stream,
+                verify=verify
+            )
+            return response  # ✅ Real server response, even if error code (e.g. 404)
+
+        except requests.exceptions.RequestException as e:
+            # 🔹 Handle exceptions where no response was returned by the server
+            response = requests.Response()
+            response.url = url
+            response._content = str(e).encode("utf-8")
+            response.encoding = "utf-8"
+            response.request = requests.Request("PATCH", url).prepare()
+            response.reason = type(e).__name__
+            response.headers["X-Error-Type"] = type(e).__name__
+
+            # Assign synthetic status code based on exception type
+            if isinstance(e, requests.exceptions.Timeout):
+                response.status_code = 408  # Request Timeout
+            elif isinstance(e, requests.exceptions.ConnectionError):
+                response.status_code = 0    # Custom: No connection
+            elif isinstance(e, requests.exceptions.TooManyRedirects):
+                response.status_code = 310  # Custom: Too many redirects
+            else:
+                response.status_code = 520  # Cloudflare-style unknown error
+
+            return response
+
+    @staticmethod
+    def send_delete_full_request(
+        url: str,                                       # Required: Target endpoint URL
+        params: Optional[Dict[str, Any]] = None,        # Optional: Query parameters (?key=value)
+        headers: Optional[Dict[str, str]] = None,       # Optional: HTTP headers
+        cookies: Optional[Dict[str, str]] = None,       # Optional: Cookies to include in the request
+        auth: Optional[Tuple[str, str]] = None,         # Optional: Basic Authentication
+        timeout: Union[int, Tuple[int, int]] = 10,      # Optional: Timeout in seconds or (connect, read)
+        allow_redirects: bool = True,                   # Optional: Follow redirects
+        proxies: Optional[Dict[str, str]] = None,       # Optional: Proxy configuration
+        stream: bool = False,                           # Optional: Stream response content
+        verify: Union[bool, str] = True                 # Optional: SSL certificate verification or CA bundle path
+    ) -> requests.Response:
+        """
+        Sends an HTTP DELETE request. Always returns a requests.Response object.
+        - If the server returns an HTTP error response (e.g. 4xx, 5xx), that real response is returned.
+        - If the request fails (e.g. timeout, DNS error), a synthetic response with error info is returned.
+        """
+        try:
+            response = requests.delete(
+                url=url,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                timeout=timeout,
+                allow_redirects=allow_redirects,
+                proxies=proxies,
+                stream=stream,
+                verify=verify
+            )
+            return response  # ✅ Real server response, even if status_code is 404, 500, etc.
+
+        except requests.exceptions.RequestException as e:
+            # 🔹 Build synthetic response on error (timeout, connection issue, etc.)
+            response = requests.Response()
+            response.url = url
+            response._content = str(e).encode("utf-8")
+            response.encoding = "utf-8"
+            response.request = requests.Request("DELETE", url).prepare()
+            response.reason = type(e).__name__
+            response.headers["X-Error-Type"] = type(e).__name__
+
+            # Assign appropriate synthetic status code
+            if isinstance(e, requests.exceptions.Timeout):
+                response.status_code = 408  # Request Timeout
+            elif isinstance(e, requests.exceptions.ConnectionError):
+                response.status_code = 0    # No connection
+            elif isinstance(e, requests.exceptions.TooManyRedirects):
+                response.status_code = 310  # Too many redirects (custom)
+            else:
+                response.status_code = 520  # Unknown error
+
+            return response
+
+    @staticmethod
+    def send_universal_full_request(
+        method: str,                                      # Required: HTTP method ("GET", "POST", etc.)
+        url: str,                                         # Required: Target URL
+        params: Optional[Dict[str, Any]] = None,          # Optional: Query parameters
+        data: Optional[Union[Dict[str, Any], str]] = None,# Optional: Form data or raw body string
+        json: Optional[Dict[str, Any]] = None,            # Optional: JSON body
+        headers: Optional[Dict[str, str]] = None,         # Optional: HTTP headers
+        cookies: Optional[Dict[str, str]] = None,         # Optional: Cookies
+        files: Optional[Dict[str, Any]] = None,           # Optional: Files for upload
+        auth: Optional[Tuple[str, str]] = None,           # Optional: Basic auth
+        timeout: Union[int, Tuple[int, int]] = 10,        # Optional: Timeout in seconds or tuple (connect, read)
+        allow_redirects: bool = True,                     # Optional: Follow redirects
+        proxies: Optional[Dict[str, str]] = None,         # Optional: Proxy config
+        stream: bool = False,                             # Optional: Stream content
+        verify: Union[bool, str] = True                   # Optional: SSL verification or CA path
+    ) -> requests.Response:
+        """
+        Sends a configurable HTTP request of any method.
+        Always returns a requests.Response object.
+        - Real response is returned if available.
+        - If request fails (timeout, network issue), a synthetic Response is returned with error details.
+        """
+        try:
+            response = requests.request(
+                method=method.upper(),
+                url=url,
+                params=params,
+                data=data,
+                json=json,
+                headers=headers,
+                cookies=cookies,
+                files=files,
+                auth=auth,
+                timeout=timeout,
+                allow_redirects=allow_redirects,
+                proxies=proxies,
+                stream=stream,
+                verify=verify
+            )
+            return response  # ✅ Return real response (even if 4xx/5xx)
+
+        except requests.exceptions.RequestException as e:
+            # 🔹 Build synthetic response if request failed entirely (e.g. no internet, timeout)
+            fake_response = requests.Response()
+            fake_response.url = url
+            fake_response._content = str(e).encode("utf-8")
+            fake_response.encoding = "utf-8"
+            fake_response.request = requests.Request(method.upper(), url).prepare()
+            fake_response.reason = type(e).__name__
+            fake_response.headers["X-Error-Type"] = type(e).__name__
+
+            # Assign synthetic status code depending on the exception
+            if isinstance(e, requests.exceptions.Timeout):
+                fake_response.status_code = 408  # Request Timeout
+            elif isinstance(e, requests.exceptions.ConnectionError):
+                fake_response.status_code = 0    # No connection
+            elif isinstance(e, requests.exceptions.TooManyRedirects):
+                fake_response.status_code = 310  # Too many redirects (custom)
+            else:
+                fake_response.status_code = 520  # Unknown Error (Cloudflare-style)
+
+            return fake_response
 
 
 class MrFixSecurity:
