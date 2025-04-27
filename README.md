@@ -35,14 +35,30 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in Version 8.3.0 ?
+    - Added class MrCleanersManager
+
+        A utility class for analyzing Python test files to detect unused imports,
+        optionally creating backups of affected files, automatically fixing issues
+        by removing unused imports, and restoring files from backup if necessary.
+        
+        Features:
+        - Dry-run analysis without modifying files.
+          - Selective backup of only files with detected issues.
+          - Automatic fixing of unused imports using ruff.
+          - Restoration of backed-up files.
+          - Full logging to file and console.
+        
+        Designed for use within structured Python test projects.
+
 What's new in Version 8.2.0 ?
     - Added methods in clacc MrFixAPI:
-      "send_get_full_request". This method sends a GET request to the given URL (while supporting almost all parameters that can be passed to requests.get) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
-      "send_post_full_request". This method sends a POST request to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
-      "send_put_full_request". This method sends a POST request to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
-      "send_path_full_request". This method sends a POST request to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
-      "send_delete_full_request". This method sends a POST request to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
-      "send_universal_full_request". This method sends a request (GET, POST, PUT, PATH or DELETE) to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
+        "send_get_full_request". This method sends a GET request to the given URL (while supporting almost all parameters that can be passed to requests.get) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
+        "send_post_full_request". This method sends a POST request to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
+        "send_put_full_request". This method sends a POST request to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
+        "send_path_full_request". This method sends a POST request to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
+        "send_delete_full_request". This method sends a POST request to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
+        "send_universal_full_request". This method sends a request (GET, POST, PUT, PATH or DELETE) to the given URL (while supporting almost all parameters that can be passed to requests.post) and returns a requests.Response object, even if an error occurred (in this case, it creates a synthetic response object containing information about the error).
 
 What's new in Version 8.1.1 ?
     - Added method "set_list_dict_cookies" (class MrFixUI). This method sets all possible cookies on a browser page from a JSON file (contains cookies as a list of dictionaries)
