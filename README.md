@@ -36,7 +36,6 @@ Almost all methods are static (@staticmethod)
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
 What's new in Version 8.3.1 ?
-    - Changed the "get_driver" method (MrBrowserManager class) for more stable operation in various conditions.
     - Added method "load_env_config" (in class MrFixSQL) - Loads configuration variables from a `.env` file and returns them as a dictionary without modifying `os.environ`.
     - Added method "get_connection" (in class MrFixSQL) - Establishes and returns a PostgreSQL database connection using the provided configuration dictionary.
     - Added method "execute_query" (in class MrFixSQL) - Executes an SQL query using the given config and optionally fetches and prints the results in a formatted table.
