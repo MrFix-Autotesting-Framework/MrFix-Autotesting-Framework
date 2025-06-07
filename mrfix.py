@@ -41,9 +41,13 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
-import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Set
+import logging
+from dotenv import dotenv_values
+from decimal import Decimal
+from datetime import datetime as dt
+from tabulate import tabulate
 
 
 class MrFixUI:
@@ -1558,7 +1562,6 @@ class MrFixSQL:
             cursor.close()
             connection.close()
 
-
     @staticmethod
     # экспорт таблицы из PostgreSQL в csv-файл
     # Exports a table from PostgreSQL to a csv file
@@ -1651,8 +1654,6 @@ class MrFixSQL:
             cursor.close()
             connection.close()
 
-
-
     @staticmethod
     #  изменяет одну запись в таблице и сообщает о результате выполнения (успешно или ошибка)
     # Changes record in PostgreSQL using sql_query SQL query.
@@ -1737,6 +1738,70 @@ class MrFixSQL:
             # Close the cursor and connection
             cursor.close()
             connection.close()
+
+    @staticmethod
+    def load_env_config(env_path=".env.bd"):
+        """
+        Загружает и возвращает словарь конфигурации из .env-файла без загрязнения глобального os.environ
+        Loads and returns a configuration dictionary from a .env file without polluting the global os.environ
+        """
+        config = dotenv_values(env_path)
+        if not config:
+            print("Variables not loaded from %s or file is empty", env_path)
+        else:
+            print("Configuration loaded from: %s", env_path)
+        return config
+
+    @staticmethod
+    def get_connection(config: dict):
+        """
+        Устанавливает соединение с БД, используя переданный словарь конфигурации.
+        Establishes a connection to the database using the passed configuration dictionary.
+        """
+        try:
+            return psycopg2.connect(
+                dbname=config.get("DB_NAME"),
+                user=config.get("DB_USER"),
+                password=config.get("DB_PASSWORD"),
+                host=config.get("DB_HOST"),
+                port=config.get("DB_PORT", 5432),
+                sslmode=config.get("DB_SSLMODE", "require")
+            )
+        except Exception as e:
+            print("Error connecting to database: %s", e)
+            raise
+
+    @staticmethod
+    def execute_query(query, params=None, fetch=True, config: dict = None):
+        if config is None:
+            print("Configuration dictionary not passed (config)")
+            return "Error: config is required"
+
+        try:
+            start_time = dt.now()
+            print("Executing query: %s", query)
+            print("With params: %s", params)
+
+            with MrFixSQL.get_connection(config) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, params)
+                    duration = (dt.now() - start_time).total_seconds()
+
+                    if query.strip().lower().startswith("select") and fetch:
+                        columns = [desc[0] for desc in cur.description]
+                        rows = cur.fetchall()
+                        table = tabulate(rows, headers=columns, tablefmt="grid", floatfmt=".2f")
+                        print("Query completed in %.2fs — rows fetched: %d", duration, len(rows))
+                        print("Result:\n%s", table)
+                        return [rows, table]
+                    else:
+                        conn.commit()
+                        affected = cur.rowcount
+                        print("Query completed in %.2fs — rows affected: %d", duration, affected)
+                        return f"Query executed successfully. Rows affected: {affected}"
+        except Exception as e:
+            logger.error("Query failed: %s", e)
+            return f"Error: {e}"
 
 
 class MrFixAPI:
