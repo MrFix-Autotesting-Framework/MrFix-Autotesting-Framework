@@ -11,8 +11,8 @@ Allows a beginner (and not just a beginner) specialist in quality control automa
 
 
 All versions of the mrfix module are safe to install in a corporate environment. Here's what it says, for example, about the previous version:
-"The latest version of mrfix with no known security vulnerabilities is 8.0.8. We recommend installing version 8.0.8.
-The information on this page was curated by experts in our Cybersecurity Intelligence Team."            
+The latest version of mrfix with no known security vulnerabilities is 8.3.0. We recommend installing version 8.3.0.
+The information on this page was curated by experts in our Cybersecurity Intelligence Team.        
 
                                                     Safety CLI Cybersecurity Inc
                                                     https://data.safetycli.com/packages/pypi/mrfix/
@@ -34,6 +34,14 @@ The advantages of the module are also:
 Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
+
+What's new in Version 8.3.1 ?
+    - Changed the "get_driver" method (MrBrowserManager class) for more stable operation in various conditions.
+    - Added method "load_env_config" (in class MrFixSQL) - Loads configuration variables from a `.env` file and returns them as a dictionary without modifying `os.environ`.
+    - Added method "get_connection" (in class MrFixSQL) - Establishes and returns a PostgreSQL database connection using the provided configuration dictionary.
+    - Added method "execute_query" (in class MrFixSQL) - Executes an SQL query using the given config and optionally fetches and prints the results in a formatted table.
+    - Added method "execute_query_and_get_results" (in class MrFixSQL) - Executes an SQL query and returns the results as a list of dictionaries, with optional printing of the results in a formatted table.
+    - Fix several bugs
 
 What's new in Version 8.3.0 ?
     - Added class MrCleanersManager
