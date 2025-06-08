@@ -2,7 +2,7 @@ import sys
 import shutil
 from collections import defaultdict
 import time
-from typing import Optional, Dict, Any, Tuple, Union
+from typing import Optional, Dict, Any, Tuple, Union, List, Set
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import WebDriverException
@@ -42,12 +42,15 @@ from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from pathlib import Path
-from typing import Optional, Dict, List, Set
 import logging
 from dotenv import dotenv_values
 from decimal import Decimal
 from datetime import datetime as dt
 from tabulate import tabulate
+import socket
+from urllib.parse import urlparse
+
+
 
 
 class MrFixUI:
@@ -2307,6 +2310,82 @@ class MrFixSecurity:
 
         except Exception as e:
             return str(e)
+
+    @staticmethod
+    def check_is_port_open(host: str, port: int, timeout: float = 1.0) -> bool:
+        """
+        Checks if a specific port on the given host is open.
+        Returns True if the port is open, False otherwise.
+        """
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(timeout)
+            return sock.connect_ex((host, port)) == 0
+
+    @staticmethod
+    def check_ports(host: str, ports: list[int]) -> dict:
+        """
+        Checks a list of ports on the given host.
+        Cleans the host (removes protocol) if necessary.
+        Returns a dictionary: {port: True if open, False if closed}
+        """
+        parsed = urlparse(host)
+        clean_host = parsed.hostname or host  # fallback if no scheme
+
+        return {port: MrFixSecurity.check_is_port_open(clean_host, port) for port in ports}
+
+    @staticmethod
+    def save_results_to_json(data: Dict[str, Dict[int, bool]], filepath: str) -> None:
+        """
+        Saves the port check results into a JSON file.
+        Adds timestamp and converts integer keys to strings.
+        Ensures target directory exists.
+        """
+        # Ensure target directory exists
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        json_ready = {
+            "checked_at": datetime.utcnow().isoformat() + "Z",
+            "results": {
+                host: {str(port): status for port, status in result.items()}
+                for host, result in data.items()
+            }
+        }
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(json_ready, f, indent=2, ensure_ascii=False)
+
+        print(f"\n✅ Results saved to: {filepath}")
+
+    @staticmethod
+    def check_hosts_ports_and_save_in_json(hosts_and_ports: Dict[str, List[int]], filepath: str, silent: bool = False) -> \
+    dict[Any, Any]:
+        """
+        Processes multiple hosts with their corresponding ports,
+        optionally prints results to the console, and saves them to a JSON file.
+        """
+        all_results = {}
+
+        for host, ports in hosts_and_ports.items():
+            result = MrFixSecurity.check_ports(host, ports)
+            all_results[host] = result
+
+            if not silent:
+                print(f"\nChecking host: {host}")
+                for port, is_open in result.items():
+                    status = "OPEN" if is_open else "CLOSED"
+                    print(f"Port {port:<5} — {status}")
+
+        MrFixSecurity.save_results_to_json(all_results, filepath)
+        return all_results
+
+        # Example configuration: host -> list of ports
+        # hosts_and_ports = {
+        #     "localhost": [22, 80, 443, 8000, 5432],
+        #     "example.com": [80, 443, 8080],
+        # }
+
+        # Run checks with silent=False to see output
+        # MrFixSecurity.check_hosts_ports_and_save_in_json(hosts_and_ports, "port_check_results.json", silent=False)
 
 
 class MrFixTime:
