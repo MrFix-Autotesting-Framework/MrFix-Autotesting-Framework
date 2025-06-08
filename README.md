@@ -35,7 +35,15 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in Version 8.3.2 ?
+    - Added methods in class MrFixSecurity:
+        "check_is_port_open". Checks if a specific port on the given host is open.
+        "Check_ports". Checks a list of ports on the given host.
+        "Save_results_to_json". Saves the port check results into a JSON file.
+        "Check_hosts_ports_and_save_in_json". Processes multiple hosts with their corresponding ports, optionally prints results to the console, and saves them to a JSON file.
+
 What's new in Version 8.3.1 ?
+    - Changed the "get_driver" method (MrBrowserManager class) for more stable operation in various conditions.
     - Added method "load_env_config" (in class MrFixSQL) - Loads configuration variables from a `.env` file and returns them as a dictionary without modifying `os.environ`.
     - Added method "get_connection" (in class MrFixSQL) - Establishes and returns a PostgreSQL database connection using the provided configuration dictionary.
     - Added method "execute_query" (in class MrFixSQL) - Executes an SQL query using the given config and optionally fetches and prints the results in a formatted table.
