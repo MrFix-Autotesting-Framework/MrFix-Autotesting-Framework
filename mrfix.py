@@ -49,6 +49,10 @@ from datetime import datetime as dt
 from tabulate import tabulate
 import socket
 from urllib.parse import urlparse
+import mysql.connector
+import sqlite3
+
+
 
 
 
@@ -1758,53 +1762,150 @@ class MrFixSQL:
     @staticmethod
     def get_connection(config: dict):
         """
-        Устанавливает соединение с БД, используя переданный словарь конфигурации.
-        Establishes a connection to the database using the passed configuration dictionary.
+        Establishes a database connection based on DB_TYPE: postgres, mysql, or sqlite.
+        Returns a connection object for the specified database type.
+
+        Supported .env variables:
+            PostgreSQL:
+                DB_TYPE=postgres
+                DB_NAME=my_db
+                DB_USER=postgres
+                DB_PASSWORD=secret
+                DB_HOST=localhost
+                DB_PORT=5432
+                DB_SCHEMA=custom_schema
+                DB_SSLMODE=require
+            MySQL:
+                DB_TYPE=mysql
+                DB_NAME=my_db
+                DB_USER=root
+                DB_PASSWORD=secret
+                DB_HOST=localhost
+                DB_PORT=3306
+                DB_SSL_DISABLED=true
+            SQLite:
+                DB_TYPE=sqlite
+                DB_PATH=/home/user/test.sqlite
         """
+
+        db_type = config.get("DB_TYPE", "postgres").lower()
+
         try:
-            return psycopg2.connect(
-                dbname=config.get("DB_NAME"),
-                user=config.get("DB_USER"),
-                password=config.get("DB_PASSWORD"),
-                host=config.get("DB_HOST"),
-                port=config.get("DB_PORT", 5432),
-                sslmode=config.get("DB_SSLMODE", "require")
-            )
+            if db_type == "postgres":
+                params = {
+                    "dbname": config.get("DB_NAME"),
+                    "user": config.get("DB_USER"),
+                    "password": config.get("DB_PASSWORD"),
+                    "host": config.get("DB_HOST"),
+                    "port": config.get("DB_PORT", 5432)
+                }
+
+                sslmode = config.get("DB_SSLMODE")
+                if sslmode:
+                    params["sslmode"] = sslmode
+
+                conn = psycopg2.connect(**params)
+
+                schema = config.get("DB_SCHEMA")
+                if schema:
+                    with conn.cursor() as cur:
+                        cur.execute(f"SET search_path TO {schema};")
+                    # Альтернатива: conn.set_session(options=f'-c search_path={schema}')
+
+                return conn
+
+            elif db_type == "mysql":
+                params = {
+                    "database": config.get("DB_NAME"),
+                    "user": config.get("DB_USER"),
+                    "password": config.get("DB_PASSWORD"),
+                    "host": config.get("DB_HOST"),
+                    "port": int(config.get("DB_PORT", 3306)),
+                    "ssl_disabled": config.get("DB_SSL_DISABLED", "true").lower() == "true"
+                }
+
+                return mysql.connector.connect(**params)
+
+            elif db_type == "sqlite":
+                db_path = config.get("DB_PATH")
+                if not db_path:
+                    raise ValueError("DB_PATH must be specified for SQLite connection.")
+                return sqlite3.connect(db_path)
+
+            else:
+                raise ValueError(f"Unsupported DB_TYPE: {db_type}")
+
         except Exception as e:
-            print("Error connecting to database: %s", e)
+            print(f"Error connecting to {db_type} database: {e}")
             raise
 
     @staticmethod
-    def execute_query(query, params=None, fetch=True, config: dict = None):
+    def execute_query(query, params=None, config: dict = None, fetch: bool = None):
+        """
+        Executes a SQL query on PostgreSQL, MySQL, or SQLite.
+        Always returns a tuple [result, table]:
+            - On SELECT or RETURNING:
+                [rows: list of tuples, formatted_table: str]
+            - On non-SELECT:
+                [status_message: str, formatted_message: str]
+            - On error:
+                [error_message: str, formatted_error: str]
+        """
         if config is None:
-            print("Configuration dictionary not passed (config)")
-            return "Error: config is required"
+            return ["Error: Configuration not provided", "Error: Configuration not provided"]
+
+        db_type = config.get("DB_TYPE", "postgres").lower()
 
         try:
-            start_time = dt.now()
-            print("Executing query: %s", query)
-            print("With params: %s", params)
+            conn = MrFixSQL.get_connection(config)
+            cur = conn.cursor()
 
-            with MrFixSQL.get_connection(config) as conn:
-                with conn.cursor() as cur:
+            try:
+                if params is not None:
                     cur.execute(query, params)
-                    duration = (dt.now() - start_time).total_seconds()
+                else:
+                    cur.execute(query)
 
-                    if query.strip().lower().startswith("select") and fetch:
-                        columns = [desc[0] for desc in cur.description]
-                        rows = cur.fetchall()
-                        table = tabulate(rows, headers=columns, tablefmt="grid", floatfmt=".2f")
-                        print("Query completed in %.2fs — rows fetched: %d", duration, len(rows))
-                        print("Result:\n%s", table)
-                        return [rows, table]
-                    else:
-                        conn.commit()
-                        affected = cur.rowcount
-                        print("Query completed in %.2fs — rows affected: %d", duration, affected)
-                        return f"Query executed successfully. Rows affected: {affected}"
+                q_lower = query.strip().lower()
+                first_word = q_lower.split()[0]
+                is_fetchable = (
+                    fetch if fetch is not None
+                    else first_word in {"select", "with", "show", "call"}
+                         or "returning" in q_lower
+                )
+
+                if db_type == "sqlite" and ("returning" in q_lower or first_word not in {"select", "with"}):
+                    is_fetchable = False
+
+                if is_fetchable:
+                    if cur.description is None:
+                        msg = "⚠ No columns returned"
+                        return [msg, tabulate([[msg]], headers=["Warning"], tablefmt="grid")]
+
+                    # Защита от некорректных desc
+                    columns = [
+                        desc[0] if desc and len(desc) > 0 else f"col_{i}"
+                        for i, desc in enumerate(cur.description)
+                    ]
+                    rows = cur.fetchall()
+                    table = tabulate(rows, headers=columns, tablefmt="grid", floatfmt=".2f")
+                    return [rows, table]
+
+                else:
+                    conn.commit()
+                    affected = cur.rowcount
+                    message = f"Query OK - rows affected: {affected}"
+                    table = tabulate([[message]], headers=["Status"], tablefmt="grid")
+                    return [message, table]
+
+            finally:
+                cur.close()
+                conn.close()
+
         except Exception as e:
-            logger.error("Query failed: %s", e)
-            return f"Error: {e}"
+            error_message = f"Query failed: {e}"
+            error_table = tabulate([[error_message]], headers=["Error"], tablefmt="grid")
+            return [error_message, error_table]
 
 
 class MrFixAPI:
