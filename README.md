@@ -35,6 +35,10 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in Version 8.3.4 ?
+    - Added method in class MrFixUI:
+        "waiting_in_ui". The method can be used instead of time.sleep() in automated UI tests. It uses Selenium's explicit wait, but does not conflict with the implicit wait that is set.
+
 What's new in Version 8.3.3 ?
     - Changed methods "get_connection" and "execute_query" in class MrFixSQL to work with PostgreSQL, MySQL and SQLite databases.
 
