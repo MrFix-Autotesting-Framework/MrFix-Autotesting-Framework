@@ -1414,6 +1414,21 @@ class MrFixUI:
         except NoAlertPresentException:
             return "No JavaScript prompt present to enter text."
 
+    @staticmethod
+    def waiting_in_ui(browser, waiting_time):
+        fake_xpath = '//div[@id="fake-element_..."]'
+        old = browser.timeouts.implicit_wait
+        try:
+            browser.implicitly_wait(0)
+            WebDriverWait(browser, waiting_time).until(
+                EC.presence_of_element_located((By.XPATH, fake_xpath))
+            )
+            return True
+        except TimeoutException:
+            return False
+        finally:
+            browser.implicitly_wait(old)
+
 
 class MrFixSQL:
 
