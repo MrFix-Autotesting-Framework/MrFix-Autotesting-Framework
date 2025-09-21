@@ -35,6 +35,28 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in Version 9.0.0 ?
+
+    - Added class MrFixStatistics:
+        """Utilities for fetching and summarizing PyPI download statistics via the public pypistats.org API.
+        All functionality is exposed as @staticmethods for easy reuse in scripts and CLI entry points."""
+    - Added method get_pip_statistics:
+        """Run the statistics workflow for a given PyPI package.
+        If `pip_pkg` is None, CLI args are parsed and the package name is requested interactively when missing.
+        Otherwise, `pip_pkg` overrides the package name and default CLI values are used.
+        Side effects:
+        - Prints recent aggregates (/recent) and recomputed aggregates from /overall (1/7/30/90/180 days),
+          plus optional time-series (/overall, /python_major, /python_minor, /system), depending on CLI flags.
+        Args:
+            pip_pkg (str | None): Optional package name to run without CLI input.
+        Returns:
+            None
+        """
+
+What's new in Version 8.3.5 ?
+    - Changed method in class MrFixUI:
+        "wait_for_element_to_appear" and "wait_for_element_to_disappear". Minor cosmetic changes to these and some other methods without changing the functionality and data used.
+
 What's new in Version 8.3.4 ?
     - Added method in class MrFixUI:
         "waiting_in_ui". The method can be used instead of time.sleep() in automated UI tests. It uses Selenium's explicit wait, but does not conflict with the implicit wait that is set.
