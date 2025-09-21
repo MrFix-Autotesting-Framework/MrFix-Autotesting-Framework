@@ -1,3 +1,4 @@
+from __future__ import annotations
 import sys
 import shutil
 from collections import defaultdict
@@ -17,7 +18,6 @@ from selenium.webdriver.common.keys import Keys
 from loguru import logger
 import datetime
 import pyperclip
-import json
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import JavascriptException
@@ -32,7 +32,6 @@ import csv
 import socket
 from cryptography.fernet import Fernet
 import os
-import requests
 import asyncio
 import httpx
 import pytest
@@ -46,13 +45,15 @@ import logging
 from dotenv import dotenv_values
 from decimal import Decimal
 from datetime import datetime as dt
+from datetime import timedelta, timezone
 from tabulate import tabulate
 import socket
 from urllib.parse import urlparse
 import mysql.connector
 import sqlite3
-
-
+import argparse
+import json
+import requests
 
 
 
@@ -842,7 +843,9 @@ class MrFixUI:
     @staticmethod
     def wait_for_element_to_disappear(driver, element_xpath, waiting_time):
         # - during the waiting time, time = waiting_time waits for the element with xpath = element_xpath to disappear and return True or text of error
+        old = driver.timeouts.implicit_wait
         try:
+            driver.implicitly_wait(0)
             # Wait for the element to disappear
             wait = WebDriverWait(driver, waiting_time)  # Maximum wait time in seconds
             wait.until(EC.invisibility_of_element_located((By.XPATH, element_xpath)))
@@ -851,11 +854,15 @@ class MrFixUI:
 
         except Exception as e:
             return str(e)
+        finally:
+            driver.implicitly_wait(old)
 
     @staticmethod
     def wait_for_element_to_appear(driver, element_xpath, waiting_time):
         # - during the waiting time, time = waiting_time waits for the element with xpath = element_xpath to appear and return True or text of error
+        old = driver.timeouts.implicit_wait
         try:
+            driver.implicitly_wait(0)
             # Wait for the element to appear
             wait = WebDriverWait(driver, waiting_time)  # Maximum wait time in seconds
             wait.until(EC.presence_of_element_located((By.XPATH, element_xpath)))
@@ -864,6 +871,8 @@ class MrFixUI:
 
         except Exception as e:
             return str(e)
+        finally:
+            driver.implicitly_wait(old)
 
     @staticmethod
     def check_text_in_class(driver, element_xpath, class_text):
@@ -905,8 +914,6 @@ class MrFixUI:
             alert = wait.until(EC.alert_is_present())
 
             # Switch to the alert and accept it (click "OK")
-            # alert = browser.switch_to.alert
-            # alert.accept()
             Alert(driver).accept()
             return True  # Clicked the "OK" button successfully
 
@@ -1100,7 +1107,7 @@ class MrFixUI:
         # - element_xpath: XPath expression to locate the element.
         # - new_text: The new text to set as innerHTML.
         # Example usage:
-        # modify_element_text(browser, "//div[@class='example']", "New Text")
+        # modify_element_text(driver, "//div[@class='example']", "New Text")
 
         try:
             element = driver.find_element(By.XPATH, span_xpath)
@@ -1254,20 +1261,20 @@ class MrFixUI:
             return f"Error: {str(e)}"
 
     @staticmethod
-    def insert_from_clipboard(browser, input_xpath):
+    def insert_from_clipboard(driver, input_xpath):
     # This method for inserting text from the clipboard into the input field
     # on a web page in the field with xpath = input_xpath
         try:
             # Check permission to read from the buffer in the browser
-            browser.execute_script(
+            driver.execute_script(
                 "navigator.permissions.query({name: 'clipboard-read'}).then(permissionStatus => "
                 "{if (permissionStatus.state == 'denied') {console.log('Permission to read clipboard denied.');}});")
 
-            rezult = MrFixUI.click_element_by_xpath(browser, input_xpath)
+            rezult = MrFixUI.click_element_by_xpath(driver, input_xpath)
             if rezult != True: return "Checking permission to read from the buffer in the browser - False"
 
             # Simulating keystrokes to copy text
-            actions = ActionChains(browser)
+            actions = ActionChains(driver)
             actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
             return True
 
@@ -1276,18 +1283,18 @@ class MrFixUI:
             return f"Error: {str(e)}"
 
     @staticmethod
-    def scroll_to_element(browser, xpath):
+    def scroll_to_element(driver, xpath):
         """
         Finds an element by the specified XPath and smoothly scrolls to it.
 
-        :param browser: WebDriver - Selenium browser object.
+        :param driver: WebDriver - Selenium browser object.
         :param xpath: str - XPath of the element to scroll to.
         """
         try:
             # Find the element
-            element = browser.find_element(By.XPATH, xpath)
+            element = driver.find_element(By.XPATH, xpath)
             # Scroll to the element
-            browser.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element)
+            driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element)
             return True
         except Exception as e:
             # Handle errors
@@ -1337,21 +1344,21 @@ class MrFixUI:
             return driver, f"An error occurred: {str(e)}", []
 
     @staticmethod
-    def check_Console_and_Network_errors(browser, url):
+    def check_Console_and_Network_errors(driver, url):
         try:
             # Enabling network log interception (Chrome DevTools Protocol)
-            browser.execute_cdp_cmd("Network.enable", {})
+            driver.execute_cdp_cmd("Network.enable", {})
 
             # Opening the page
-            browser.get(url)
+            driver.get(url)
 
             # We get errors from the browser console
-            logs = browser.get_log("browser")
+            logs = driver.get_log("browser")
             console_errors = [entry["message"] for entry in logs if "SEVERE" in entry["level"]]
 
             # We get network errors (HTTP 4xx и 5xx)
             network_errors = []
-            performance_logs = browser.get_log("performance")  # Taking away all network events
+            performance_logs = driver.get_log("performance")  # Taking away all network events
 
             for entry in performance_logs:
                 log_message = json.loads(entry["message"])["message"]
@@ -1375,39 +1382,39 @@ class MrFixUI:
             return {"error": str(e)}
 
     @staticmethod
-    def execute_js_script(browser: webdriver, script_name):
+    def execute_js_script(driver: webdriver, script_name):
         # We run the JS script named script_name
         try:
-            browser.execute_script(script_name)
+            driver.execute_script(script_name)
             return True
         except (JavascriptException, WebDriverException) as e:
             return f"JavaScript execution error: {e}"
 
     @staticmethod
-    def accept_js_dialog(browser):
+    def accept_js_dialog(driver):
         # Clicks 'OK' in a JS pop-up window.
         try:
-            alert = Alert(browser)
+            alert = Alert(driver)
             alert.accept()
             return True
         except NoAlertPresentException:
             return "No JavaScript alert present to accept."
 
     @staticmethod
-    def dismiss_js_dialog(browser):
+    def dismiss_js_dialog(driver):
         # Clicks 'Cancel' in the JS popup.
         try:
-            alert = Alert(browser)
+            alert = Alert(driver)
             alert.dismiss()
             return True
         except NoAlertPresentException:
             return "No JavaScript alert present to dismiss."
 
     @staticmethod
-    def enter_text_in_js_dialog(browser, text):
+    def enter_text_in_js_dialog(driver, text):
         # Enters text into the JS pop-up window (prompt) and clicks 'OK'.
         try:
-            alert = Alert(browser)
+            alert = Alert(driver)
             alert.send_keys(text)
             alert.accept()
             return True
@@ -1415,19 +1422,19 @@ class MrFixUI:
             return "No JavaScript prompt present to enter text."
 
     @staticmethod
-    def waiting_in_ui(browser, waiting_time):
+    def waiting_in_ui(driver, waiting_time):
         fake_xpath = '//div[@id="fake-element_..."]'
-        old = browser.timeouts.implicit_wait
+        old = driver.timeouts.implicit_wait
         try:
-            browser.implicitly_wait(0)
-            WebDriverWait(browser, waiting_time).until(
+            driver.implicitly_wait(0)
+            WebDriverWait(driver, waiting_time).until(
                 EC.presence_of_element_located((By.XPATH, fake_xpath))
             )
             return True
         except TimeoutException:
             return False
         finally:
-            browser.implicitly_wait(old)
+            driver.implicitly_wait(old)
 
 
 class MrFixSQL:
@@ -3447,6 +3454,361 @@ class MrCleanersManager:
     # MrCleanersManager.run_cleanup(test_dir="Tests/", restore=True)
     # ATTENTION! The method must be executed in a file located in the root of the project,
     # so that the tests folder is a subfolder in this project.
+
+
+class MrFixStatistics:
+    # !/usr/bin/env python3
+    # -*- coding: utf-8 -*-
+
+    """
+    pypistats_cli_static.py — interactive/CLI script for PyPI statistics from pypistats.org.
+    Everything is implemented as @staticmethod inside the MrFixStatistics class.
+
+    Features:
+    - /recent: last_day / last_week / last_month
+    - /overall: daily dynamics (with/without mirrors)
+    - /python_major, /python_minor: breakdown by Python versions
+    - /system: breakdown by operating system
+    - Recalculation of aggregates from /overall for 1/7/30/90/180 days
+    - Output of the last N rows by date
+    """
+
+    BASE = "https://pypistats.org/api/packages"
+    _DEFAULT_HEADERS = {
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json",
+        "Connection": "close",
+    }
+
+    # ---------- HTTP ----------
+
+    @staticmethod
+    def _get_json(url: str, params: Optional[Dict[str, Any]] = None, timeout: float = 15.0) -> Optional[
+        Dict[str, Any]]:
+        """Resilient GET with 1 retry for 429/5xx. Returns JSON or None."""
+        for attempt in range(2):
+            resp = requests.get(url, headers=MrFixStatistics._DEFAULT_HEADERS, params=params, timeout=timeout)
+            if resp.status_code == 200:
+                try:
+                    return resp.json()
+                except ValueError:
+                    return None
+            if resp.status_code in (429, 500, 502, 503, 504) and attempt == 0:
+                continue
+            break
+        return None
+
+    # ---------- Endpoints ----------
+
+    @staticmethod
+    def get_pypistats_recent(package: str, period: Optional[str] = None) -> Optional[Dict[str, int]]:
+        """
+        /api/packages/<package>/recent
+        period: 'day' | 'week' | 'month' | None
+        Returns {'last_day': int, 'last_week': int, 'last_month': int}
+        """
+        url = f"{MrFixStatistics.BASE}/{package}/recent"
+        params = {"period": period} if period else None
+        js = MrFixStatistics._get_json(url, params=params)
+        if not js or "data" not in js:
+            return None
+        d = js["data"]
+        return {
+            "last_day": int(d.get("last_day", 0)),
+            "last_week": int(d.get("last_week", 0)),
+            "last_month": int(d.get("last_month", 0)),
+        }
+
+    @staticmethod
+    def get_pypistats_overall(package: str, mirrors: Optional[bool] = None) -> Optional[List[Dict[str, Any]]]:
+        """
+        /api/packages/<package>/overall
+        mirrors: True/False/None (None — return both categories).
+        Returns [{'category': 'without_mirrors'|'with_mirrors','date': 'YYYY-MM-DD','downloads': int}, ...]
+        """
+        url = f"{MrFixStatistics.BASE}/{package}/overall"
+        params = {"mirrors": str(mirrors).lower()} if mirrors is not None else None
+        js = MrFixStatistics._get_json(url, params=params)
+        return js.get("data") if js else None
+
+    @staticmethod
+    def get_pypistats_python_major(package: str, version: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+        """
+        /api/packages/<package>/python_major
+        version: '2' | '3' | None
+        """
+        url = f"{MrFixStatistics.BASE}/{package}/python_major"
+        params = {"version": version} if version else None
+        js = MrFixStatistics._get_json(url, params=params)
+        return js.get("data") if js else None
+
+    @staticmethod
+    def get_pypistats_python_minor(package: str, version: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+        """
+        /api/packages/<package>/python_minor
+        version: e.g., '3.8' | '3.10' | None
+        """
+        url = f"{MrFixStatistics.BASE}/{package}/python_minor"
+        params = {"version": version} if version else None
+        js = MrFixStatistics._get_json(url, params=params)
+        return js.get("data") if js else None
+
+    @staticmethod
+    def get_pypistats_system(package: str, os_name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+        """
+        /api/packages/<package>/system
+        os_name: 'windows' | 'linux' | 'darwin' | 'other' | None
+        """
+        url = f"{MrFixStatistics.BASE}/{package}/system"
+        params = {"os": os_name} if os_name else None
+        js = MrFixStatistics._get_json(url, params=params)
+        return js.get("data") if js else None
+
+    # ---------- Aggregation from /overall ----------
+
+    @staticmethod
+    def _sum_period(points: List[Dict[str, Any]], category: str, days: int) -> int:
+        """Sum of downloads for the last `days` days BEFORE the current date (UTC), excluding the current day."""
+        if not points:
+            return 0
+        today_utc = datetime.now(timezone.utc).date()
+        start = today_utc - timedelta(days=days)
+        total = 0
+        for p in points:
+            if p.get("category") != category:
+                continue
+            try:
+                d = datetime.strptime(p["date"], "%Y-%m-%d").date()
+                if start <= d < today_utc:
+                    total += int(p.get("downloads", 0))
+            except Exception:
+                continue
+        return total
+
+    @staticmethod
+    def recalc_recent_from_overall(package: str) -> Optional[Dict[str, Dict[str, int]]]:
+        """
+        Returns aggregates from /overall:
+        {
+          "without_mirrors": {"last_day": X, "last_week": Y, "last_month": Z, "last_3_months": U, "last_6_months": V},
+          "with_mirrors":    {"last_day": A, "last_week": B, "last_month": C, "last_3_months": W, "last_6_months": Q}
+        }
+        """
+        overall = MrFixStatistics.get_pypistats_overall(package, mirrors=None)
+        if overall is None:
+            return None
+        result = {}
+        for cat in ("without_mirrors", "with_mirrors"):
+            result[cat] = {
+                "last_day": MrFixStatistics._sum_period(overall, cat, 1),
+                "last_week": MrFixStatistics._sum_period(overall, cat, 7),
+                "last_month": MrFixStatistics._sum_period(overall, cat, 30),
+                "last_3_months": MrFixStatistics._sum_period(overall, cat, 90),
+                "last_6_months": MrFixStatistics._sum_period(overall, cat, 180),
+            }
+        return result
+
+    # ---------- Formatting/Output ----------
+
+    @staticmethod
+    def _fmt_int(n: Optional[int]) -> str:
+        try:
+            return f"{int(n):,}".replace(",", " ")
+        except Exception:
+            return "-"
+
+    @staticmethod
+    def _parse_date_safe(s: str) -> Optional[datetime]:
+        try:
+            return datetime.strptime(s, "%Y-%m-%d")
+        except Exception:
+            return None
+
+    @staticmethod
+    def _print_series(name: str, series: Optional[List[Dict[str, Any]]], limit: Optional[int] = None) -> None:
+        """
+        Print time series: sort by date and output the LAST `limit` rows.
+        """
+        print(f"\n== {name} ==")
+        if not series:
+            print("no data")
+            return
+
+        sorted_series = sorted(
+            series,
+            key=lambda p: (MrFixStatistics._parse_date_safe(str(p.get("date", ""))) or datetime.min,
+                           str(p.get("category", "")))
+        )
+
+        if limit is not None and limit >= 0:
+            rows = sorted_series[-limit:] if limit > 0 else sorted_series
+        else:
+            rows = sorted_series
+
+        print(f"{'date':<12} {'category':<18} {'downloads':>12}")
+        print("-" * 44)
+        for p in rows:
+            date = str(p.get("date", ""))
+            cat = str(p.get("category", ""))
+            dls = MrFixStatistics._fmt_int(p.get("downloads"))
+            print(f"{date:<12} {cat:<18} {dls:>12}")
+
+        if limit is not None and limit > 0 and len(sorted_series) > limit:
+            print(f"... (showing the last {limit} rows out of {len(sorted_series)})")
+
+    # ---------- CLI / UX ----------
+
+    @staticmethod
+    def build_arg_parser() -> argparse.ArgumentParser:
+        p = argparse.ArgumentParser(
+            description="PyPI package download statistics from pypistats.org (all methods as @staticmethod).",
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
+        p.add_argument("-p", "--package", help="PyPI package name (if not specified — will be requested)")
+        p.add_argument("--period", choices=["day", "week", "month"], default=None,
+                       help="optional: return only the specified period from /recent")
+        p.add_argument("--mirrors", choices=["true", "false", "auto"], default="auto",
+                       help="mirror filter for /overall: true/false/auto (auto = both categories)")
+        p.add_argument("--version-major", dest="version_major", default=None,
+                       help="filter major Python version for /python_major (e.g., '3')")
+        p.add_argument("--version-minor", dest="version_minor", default=None,
+                       help="filter minor Python version for /python_minor (e.g., '3.10')")
+        p.add_argument("--os", dest="os_name", default=None,
+                       help="filter OS for /system (windows|linux|darwin|other)")
+        p.add_argument("--limit", type=int, default=10,
+                       help="how many last rows of time series to show (0/negative — show all)")
+        p.add_argument("--recent-only", action="store_true",
+                       help="show only /recent (+ recalculation)")
+        p.add_argument("--overall-only", action="store_true",
+                       help="show only /overall")
+        p.add_argument("--python-only", action="store_true",
+                       help="show only /python_major and /python_minor")
+        p.add_argument("--system-only", action="store_true",
+                       help="show only /system")
+        p.add_argument("--json", dest="as_json", action="store_true",
+                       help="output raw data in JSON instead of formatted text")
+        return p
+
+    @staticmethod
+    def _ensure_package_arg(pkg: Optional[str]) -> str:
+        """If the package is not provided, ask via input(); empty string is not allowed."""
+        if pkg and pkg.strip():
+            return pkg.strip()
+        while True:
+            entered = input("Enter the PyPI package name: ").strip()
+            if entered:
+                return entered
+            print("Package name cannot be empty. Please try again.")
+
+    @staticmethod
+    def get_pip_statistics(pip_pkg:str=None) -> None:
+
+        # if pip_pkg is provided, parse an empty list to get only default values
+        args = MrFixStatistics.build_arg_parser().parse_args([] if pip_pkg is not None else None)
+
+        if pip_pkg is None:
+            pkg = MrFixStatistics._ensure_package_arg(args.package)
+        else:
+            args.package = pip_pkg  # so that the code below can use args.package
+            pkg = pip_pkg
+
+        limit = None if args.limit is None or args.limit < 0 else args.limit
+
+        # section selection flags
+        show_recent = not (args.overall_only or args.python_only or args.system_only) or args.recent_only
+        show_overall = not (args.recent_only or args.python_only or args.system_only) or args.overall_only
+        show_python = not (args.recent_only or args.overall_only or args.system_only) or args.python_only
+        show_system = not (args.recent_only or args.overall_only or args.python_only) or args.system_only
+
+        # ----- /recent + recalculation -----
+        if show_recent:
+            recent = MrFixStatistics.get_pypistats_recent(pkg, period=args.period)
+            recalc = MrFixStatistics.recalc_recent_from_overall(pkg)
+
+            if args.as_json:
+                print(json.dumps({"endpoint": "recent", "data": recent, "package": pkg}, ensure_ascii=False,
+                                 indent=2))
+                print(json.dumps({"endpoint": "recalc_from_overall", "data": recalc, "package": pkg},
+                                 ensure_ascii=False, indent=2))
+            else:
+                print(f"\n== recent ({pkg}) ==")
+                if recent:
+                    print(f"per day:        {MrFixStatistics._fmt_int(recent.get('last_day'))}")
+                    print(f"per week:       {MrFixStatistics._fmt_int(recent.get('last_week'))}")
+                    print(f"per month:      {MrFixStatistics._fmt_int(recent.get('last_month'))}")
+                else:
+                    print("no data")
+
+                print("\n== recalculated from overall (UTC, excluding current day) ==")
+                if not recalc:
+                    print("no data")
+                else:
+                    wm = recalc.get("without_mirrors", {})
+                    wM = recalc.get("with_mirrors", {})
+                    print("without_mirrors:")
+                    print(f"  per day:        {MrFixStatistics._fmt_int(wm.get('last_day'))}")
+                    print(f"  per week:       {MrFixStatistics._fmt_int(wm.get('last_week'))}")
+                    print(f"  per month:      {MrFixStatistics._fmt_int(wm.get('last_month'))}")
+                    print(f"  per 3 months:   {MrFixStatistics._fmt_int(wm.get('last_3_months'))}")
+                    print(f"  per 6 months:   {MrFixStatistics._fmt_int(wm.get('last_6_months'))}")
+                    print("with_mirrors:")
+                    print(f"  per day:        {MrFixStatistics._fmt_int(wM.get('last_day'))}")
+                    print(f"  per week:       {MrFixStatistics._fmt_int(wM.get('last_week'))}")
+                    print(f"  per month:      {MrFixStatistics._fmt_int(wM.get('last_month'))}")
+                    print(f"  per 3 months:   {MrFixStatistics._fmt_int(wM.get('last_3_months'))}")
+                    print(f"  per 6 months:   {MrFixStatistics._fmt_int(wM.get('last_6_months'))}")
+
+        # ----- /overall -----
+        if show_overall:
+            if args.mirrors == "true":
+                mirrors = True
+            elif args.mirrors == "false":
+                mirrors = False
+            else:
+                mirrors = None  # both categories
+            overall = MrFixStatistics.get_pypistats_overall(pkg, mirrors=mirrors)
+            if args.as_json:
+                print(json.dumps({"endpoint": "overall", "data": overall, "package": pkg}, ensure_ascii=False,
+                                 indent=2))
+            else:
+                name = "overall (both mirrors)" if mirrors is None else f"overall (mirrors={mirrors})"
+                MrFixStatistics._print_series(name, overall, limit=limit)
+
+        # ----- /python_major & /python_minor -----
+        if show_python:
+            py_major = MrFixStatistics.get_pypistats_python_major(pkg, version=args.version_major)
+            py_minor = MrFixStatistics.get_pypistats_python_minor(pkg, version=args.version_minor)
+            if args.as_json:
+                print(json.dumps({"endpoint": "python_major", "data": py_major, "package": pkg}, ensure_ascii=False,
+                                 indent=2))
+                print(json.dumps({"endpoint": "python_minor", "data": py_minor, "package": pkg}, ensure_ascii=False,
+                                 indent=2))
+            else:
+                title = "python_major"
+                if args.version_major:
+                    title += f" (version={args.version_major})"
+                MrFixStatistics._print_series(title, py_major, limit=limit)
+
+                title = "python_minor"
+                if args.version_minor:
+                    title += f" (version={args.version_minor})"
+                MrFixStatistics._print_series(title, py_minor, limit=limit)
+
+        # ----- /system -----
+        if show_system:
+            system = MrFixStatistics.get_pypistats_system(pkg, os_name=args.os_name)
+            if args.as_json:
+                print(json.dumps({"endpoint": "system", "data": system, "package": pkg}, ensure_ascii=False,
+                                 indent=2))
+            else:
+                title = "system"
+                if args.os_name:
+                    title += f" (os={args.os_name})"
+                MrFixStatistics._print_series(title, system, limit=limit)
+
 
 
 
