@@ -3567,22 +3567,37 @@ class MrFixStatistics:
         js = MrFixStatistics._get_json(url, params=params)
         return js.get("data") if js else None
 
-    # ---------- Aggregation from /overall ----------
+    # ---------- Aggregation helpers (anchored to last available date) ----------
 
     @staticmethod
-    def _sum_period(points: List[Dict[str, Any]], category: str, days: int) -> int:
-        """Sum of downloads for the last `days` days BEFORE the current date (UTC), excluding the current day."""
-        if not points:
+    def _last_date(points: List[Dict[str, Any]], category: str) -> Optional[datetime.date]:
+        dates: List[datetime.date] = []
+        for p in points or []:
+            if p.get("category") != category:
+                continue
+            try:
+                dates.append(datetime.strptime(p["date"], "%Y-%m-%d").date())
+            except Exception:
+                pass
+        return max(dates) if dates else None
+
+    @staticmethod
+    def _sum_period_anchored(points: List[Dict[str, Any]], category: str, days: int,
+                             anchor_date: Optional[datetime.date]) -> int:
+        """
+        Sum downloads over a rolling window ending at `anchor_date` (inclusive).
+        Window length = `days` (e.g., days=7 => last 7 days including anchor).
+        """
+        if not points or not anchor_date:
             return 0
-        today_utc = datetime.now(timezone.utc).date()
-        start = today_utc - timedelta(days=days)
+        start = anchor_date - timedelta(days=days - 1)
         total = 0
         for p in points:
             if p.get("category") != category:
                 continue
             try:
                 d = datetime.strptime(p["date"], "%Y-%m-%d").date()
-                if start <= d < today_utc:
+                if start <= d <= anchor_date:
                     total += int(p.get("downloads", 0))
             except Exception:
                 continue
@@ -3591,7 +3606,7 @@ class MrFixStatistics:
     @staticmethod
     def recalc_recent_from_overall(package: str) -> Optional[Dict[str, Dict[str, int]]]:
         """
-        Returns aggregates from /overall:
+        Returns aggregates from /overall, anchored to the last available date per category:
         {
           "without_mirrors": {"last_day": X, "last_week": Y, "last_month": Z, "last_3_months": U, "last_6_months": V},
           "with_mirrors":    {"last_day": A, "last_week": B, "last_month": C, "last_3_months": W, "last_6_months": Q}
@@ -3600,14 +3615,15 @@ class MrFixStatistics:
         overall = MrFixStatistics.get_pypistats_overall(package, mirrors=None)
         if overall is None:
             return None
-        result = {}
+        result: Dict[str, Dict[str, int]] = {}
         for cat in ("without_mirrors", "with_mirrors"):
+            anchor = MrFixStatistics._last_date(overall, cat)
             result[cat] = {
-                "last_day": MrFixStatistics._sum_period(overall, cat, 1),
-                "last_week": MrFixStatistics._sum_period(overall, cat, 7),
-                "last_month": MrFixStatistics._sum_period(overall, cat, 30),
-                "last_3_months": MrFixStatistics._sum_period(overall, cat, 90),
-                "last_6_months": MrFixStatistics._sum_period(overall, cat, 180),
+                "last_day":      MrFixStatistics._sum_period_anchored(overall, cat, 1,   anchor),
+                "last_week":     MrFixStatistics._sum_period_anchored(overall, cat, 7,   anchor),
+                "last_month":    MrFixStatistics._sum_period_anchored(overall, cat, 30,  anchor),
+                "last_3_months": MrFixStatistics._sum_period_anchored(overall, cat, 90,  anchor),
+                "last_6_months": MrFixStatistics._sum_period_anchored(overall, cat, 180, anchor),
             }
         return result
 
@@ -3704,7 +3720,7 @@ class MrFixStatistics:
             print("Package name cannot be empty. Please try again.")
 
     @staticmethod
-    def get_pip_statistics(pip_pkg:str=None) -> None:
+    def get_pip_statistics(pip_pkg: str = None) -> None:
 
         # if pip_pkg is provided, parse an empty list to get only default values
         args = MrFixStatistics.build_arg_parser().parse_args([] if pip_pkg is not None else None)
@@ -3723,7 +3739,7 @@ class MrFixStatistics:
         show_python = not (args.recent_only or args.overall_only or args.system_only) or args.python_only
         show_system = not (args.recent_only or args.overall_only or args.python_only) or args.system_only
 
-        # ----- /recent + recalculation -----
+        # ----- /recent + recalculation (anchored) -----
         if show_recent:
             recent = MrFixStatistics.get_pypistats_recent(pkg, period=args.period)
             recalc = MrFixStatistics.recalc_recent_from_overall(pkg)
@@ -3731,10 +3747,10 @@ class MrFixStatistics:
             if args.as_json:
                 print(json.dumps({"endpoint": "recent", "data": recent, "package": pkg}, ensure_ascii=False,
                                  indent=2))
-                print(json.dumps({"endpoint": "recalc_from_overall", "data": recalc, "package": pkg},
+                print(json.dumps({"endpoint": "recalc_from_overall_anchored", "data": recalc, "package": pkg},
                                  ensure_ascii=False, indent=2))
             else:
-                print(f"\n== recent ({pkg}) ==")
+                print(f"\n== recent({pkg}): «UTC, only without_mirrors, yesterday/7/30 days (exclusive of today)» ==")
                 if recent:
                     print(f"per day:        {MrFixStatistics._fmt_int(recent.get('last_day'))}")
                     print(f"per week:       {MrFixStatistics._fmt_int(recent.get('last_week'))}")
@@ -3742,7 +3758,7 @@ class MrFixStatistics:
                 else:
                     print("no data")
 
-                print("\n== recalculated from overall (UTC, excluding current day) ==")
+                print("\n== recalculated from overall (anchored to last available date) ==")
                 if not recalc:
                     print("no data")
                 else:
@@ -3808,8 +3824,6 @@ class MrFixStatistics:
                 if args.os_name:
                     title += f" (os={args.os_name})"
                 MrFixStatistics._print_series(title, system, limit=limit)
-
-
 
 
 
