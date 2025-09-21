@@ -35,6 +35,9 @@ Almost all methods are static (@staticmethod)
 
 If there is a variable "driver" in the method, it is a variable of the Selenium Webdriver type. For example: driver = webdriver.Chrome()
 
+What's new in Version 9.0.1 ?
+    - Fixed the get_pip_statistics method to accurately present data
+
 What's new in Version 9.0.0 ?
 
     - Added class MrFixStatistics:
