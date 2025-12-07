@@ -54,6 +54,14 @@ import sqlite3
 import argparse
 import json
 import requests
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    ElementClickInterceptedException,
+    ElementNotInteractableException,
+    JavascriptException,
+    TimeoutException
+)
 
 
 
@@ -1435,6 +1443,36 @@ class MrFixUI:
             return False
         finally:
             driver.implicitly_wait(old)
+
+    @staticmethod
+    def click_on_element_use_js(driver, xpath: str):
+        """
+        Clicks the element using JavaScript.
+        Returns:
+            True — if click was successful.
+            str  — error code if click failed.
+        """
+
+        # Try to locate the element
+        try:
+            element = driver.find_element(By.XPATH, xpath)
+        except NoSuchElementException:
+            return "NO_SUCH_ELEMENT"
+
+        # Try to execute a JS click
+        try:
+            driver.execute_script("arguments[0].click();", element)
+            return True
+        except ElementClickInterceptedException:
+            return "CLICK_INTERCEPTED"
+        except ElementNotInteractableException:
+            return "NOT_INTERACTABLE"
+        except JavascriptException:
+            return "JS_ERROR"
+        except TimeoutException:
+            return "TIMEOUT"
+        except Exception:
+            return "UNKNOWN_ERROR"
 
 
 class MrFixSQL:
