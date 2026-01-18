@@ -8,7 +8,7 @@ except FileNotFoundError:
 
 setup(
     name="mrfix",
-    version="7.0.3",
+    version="9.0.2",
     author="Valerii Zhuravlev",
     author_email="valerii.zhuravlev.for.job@gmail.com",
     description="The Mr Fix module is designed to create autotests written in Python for testing UI, API, PostgreSQL, Security, and Performance Testing.",
